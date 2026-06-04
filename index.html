@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Universal Local Anomalous Wiki</title>
+
+  <style>
+    body {
+      margin: 0;
+      background: #0b0b0f;
+      color: #eaeaea;
+      font-family: Arial, sans-serif;
+    }
+
+    h1 {
+      text-align: center;
+      padding: 20px;
+    }
+
+    .feed {
+      max-width: 600px;
+      margin: auto;
+      padding: 10px;
+    }
+
+    .post {
+      background: #161622;
+      margin: 15px 0;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .post h2 {
+      margin: 10px;
+    }
+
+    .post img {
+      width: 100%;
+      display: block;
+    }
+
+    .post p {
+      padding: 10px;
+      margin: 0;
+    }
+  </style>
+</head>
+
+<body>
+
+<h1>Universal Local Anomalous Wiki</h1>
+
+<div class="feed" id="feed"></div>
+
+<script>
+const posts = [
+  {
+    title: "O Olho no Céu",
+    image: "https://picsum.photos/600/300",
+    text: "Um enorme olho flutuando próximo à órbita da Lua. Ele observa a Terra em silêncio absoluto."
+  },
+  {
+    title: "O Canto do Seu Quarto",
+    image: "https://picsum.photos/601/300",
+    text: "Mesmo iluminado, aquele canto nunca muda. Algo parece permanecer lá, fora de alcance."
+  },
+  {
+    title: "A Rua que Não Existe",
+    image: "https://picsum.photos/602/300",
+    text: "Ela aparece em registros antigos, mas ninguém consegue encontrá-la no mundo real."
+  }
+];
+
+// embaralhar posts
+function shuffle(array) {
+  return array.sort(() => Math.random() - 0.5);
+}
+
+const feed = document.getElementById("feed");
+
+shuffle(posts).forEach(post => {
+  const div = document.createElement("div");
+  div.className = "post";
+
+  div.innerHTML = `
+    <h2>${post.title}</h2>
+    <img src="${post.image}">
+    <p>${post.text}</p>
+  `;
+
+  feed.appendChild(div);
+});
+</script>
+
+</body>
+</html>
