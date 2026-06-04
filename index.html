@@ -54,7 +54,6 @@
       white-space: pre-line;
     }
 
-    /* TAG */
     .tag {
       position: absolute;
       top: -10px;
@@ -64,8 +63,6 @@
       padding: 5px 10px;
       font-size: 12px;
       border: 1px solid #444;
-      border-radius: 0;
-      z-index: 10;
       text-transform: uppercase;
     }
   </style>
@@ -78,43 +75,16 @@
 <div class="feed" id="feed"></div>
 
 <script>
-function getPosts() {
-  return JSON.parse(localStorage.getItem("posts") || "[]");
-}
-
-const defaultPosts = [
-  {
-    title: "O Olho no Céu",
-    image: "https://picsum.photos/600/300",
-    text: "RELATO 001\nEntidade observada em órbita lunar.",
-    tag: "CÉU"
-  },
-  {
-    title: "Texto solto",
-    text: "RELATO SEM CLASSIFICAÇÃO\nFragmento de realidade sem origem conhecida.",
-    tag: ""
-  },
-  {
-    image: "https://picsum.photos/602/300",
-    text: "RELATO 019\nFenômeno não catalogado.",
-    tag: "FRATURA"
-  }
-];
-
-if (!localStorage.getItem("posts")) {
-  localStorage.setItem("posts", JSON.stringify(defaultPosts));
-}
+const feed = document.getElementById("feed");
 
 function shuffle(array) {
   return array.sort(() => Math.random() - 0.5);
 }
 
-const feed = document.getElementById("feed");
+function render(posts) {
+  const shuffled = shuffle(posts);
 
-function render() {
-  let posts = shuffle(getPosts());
-
-  posts.forEach(post => {
+  shuffled.forEach(post => {
     const div = document.createElement("div");
     div.className = "post";
 
@@ -125,17 +95,17 @@ function render() {
       html += `<div class="tag">${post.tag}</div>`;
     }
 
-    // título
+    // TITLE
     if (post.title && post.title.trim() !== "") {
       html += `<div class="title">${post.title}</div>`;
     }
 
-    // imagem
+    // IMAGE
     if (post.image && post.image.trim() !== "") {
       html += `<img src="${post.image}">`;
     }
 
-    // texto
+    // TEXT
     html += `<div class="text">${post.text || ""}</div>`;
 
     div.innerHTML = html;
@@ -143,7 +113,14 @@ function render() {
   });
 }
 
-render();
+// 🔥 AGORA LÊ DO GITHUB (posts.json)
+fetch("posts.json")
+  .then(res => res.json())
+  .then(data => render(data))
+  .catch(err => {
+    feed.innerHTML = "<p>Erro ao carregar posts.json</p>";
+    console.error(err);
+  });
 </script>
 
 </body>
