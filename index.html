@@ -73,6 +73,29 @@
       flex-direction: column;
     }
 
+    /* Customização para quando os comentários substituem o post */
+    .post.comments-open {
+      height: calc(100svh - 165px) !important;
+    }
+
+    .post.comments-open .title,
+    .post.comments-open .body-shell {
+      display: none !important;
+    }
+
+    .post.comments-open .comment-box {
+      position: relative;
+      top: auto;
+      left: auto;
+      right: auto;
+      bottom: auto;
+      height: 100%;
+      background: #161622;
+      border: none;
+      box-shadow: none;
+      padding: 0;
+    }
+
     .title {
       text-align: center;
       margin: 10px 0 15px 0;
@@ -276,6 +299,10 @@
       .post {
         padding: 10px;
         border-radius: 0;
+      }
+
+      .post.comments-open {
+        height: calc(100svh - 140px) !important;
       }
 
       .title {
@@ -529,6 +556,15 @@
       const willOpen = el.hidden;
       el.hidden = !willOpen;
 
+      const postEl = el.closest(".post");
+      if (postEl) {
+        if (willOpen) {
+          postEl.classList.add("comments-open");
+        } else {
+          postEl.classList.remove("comments-open");
+        }
+      }
+
       if (willOpen) {
         const nameField = document.getElementById(`name-${postId}`);
         const savedName = localStorage.getItem(COMMENT_NAME_KEY) || "";
@@ -631,16 +667,16 @@
       html += `
           <div class="text-shell">
             <div class="text">${escapeHtml(post.text || "")}</div>
+          </div>
+        </div>
 
-            <div class="comment-box" id="cbox-${postId}" hidden>
-              <div class="comment-list" id="comments-${postId}"></div>
+        <div class="comment-box" id="cbox-${postId}" hidden>
+          <div class="comment-list" id="comments-${postId}"></div>
 
-              <div class="comment-form">
-                <input id="name-${postId}" value="${storedName}" placeholder="Nome de acesso">
-                <textarea id="text-${postId}" placeholder="Comentário"></textarea>
-                <button type="button" data-action="send-comment" data-post-id="${postId}">Enviar</button>
-              </div>
-            </div>
+          <div class="comment-form">
+            <input id="name-${postId}" value="${storedName}" placeholder="Nome de acesso">
+            <textarea id="text-${postId}" placeholder="Comentário"></textarea>
+            <button type="button" data-action="send-comment" data-post-id="${postId}">Enviar</button>
           </div>
         </div>
       </article>
@@ -684,6 +720,7 @@
       return Boolean(target.closest(".comment-box"));
     }
 
+    // Retorna a aba de comentário ou o corpo do post caso estejam rolando
     function getScrollableContainer(target) {
       if (!(target instanceof Element)) return null;
       return target.closest(".comment-list") || target.closest(".body-shell");
@@ -745,7 +782,7 @@
     }, { passive: true });
 
     document.addEventListener("touchend", (event) => {
-      if (isInsideCommentBox(touchStartTarget) || isEditableTarget(touchStartTarget)) return;
+      if (isEditableTarget(touchStartTarget)) return;
 
       const touch = event.changedTouches[0];
       const deltaY = touch.clientY - touchStartY;
