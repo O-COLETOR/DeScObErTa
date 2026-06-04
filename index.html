@@ -22,6 +22,7 @@
       max-width: 600px;
       margin: auto;
       padding: 10px;
+      box-sizing: border-box;
     }
 
     .post {
@@ -31,6 +32,7 @@
       border-radius: 10px;
       overflow: visible;
       padding: 10px;
+      box-sizing: border-box;
     }
 
     .title {
@@ -45,6 +47,8 @@
       display: block;
       margin: 0 auto 15px auto;
       border-radius: 6px;
+      max-width: 100%;
+      height: auto;
     }
 
     .text {
@@ -65,6 +69,42 @@
       font-size: 12px;
       border: 1px solid #444;
       text-transform: uppercase;
+      z-index: 10;
+    }
+
+    @media (max-width: 600px) {
+      .feed {
+        width: 100%;
+        padding: 8px;
+      }
+
+      .post {
+        margin: 12px 0;
+        padding: 10px;
+        border-radius: 8px;
+      }
+
+      .title {
+        font-size: 16px;
+        margin: 8px 0 12px 0;
+      }
+
+      .post img {
+        width: 85%;
+        margin: 0 auto 12px auto;
+      }
+
+      .text {
+        font-size: 13px;
+        line-height: 1.5;
+      }
+
+      .tag {
+        font-size: 11px;
+        top: -8px;
+        right: -8px;
+        padding: 4px 8px;
+      }
     }
   </style>
 </head>
@@ -91,22 +131,18 @@ function render(posts) {
 
     let html = "";
 
-    // TAG
     if (post.tag && post.tag.trim() !== "") {
       html += `<div class="tag">${post.tag}</div>`;
     }
 
-    // TITLE
     if (post.title && post.title.trim() !== "") {
       html += `<div class="title">${post.title}</div>`;
     }
 
-    // IMAGE
     if (post.image && post.image.trim() !== "") {
-      html += `<img src="${post.image}">`;
+      html += `<img src="${post.image}" alt="">`;
     }
 
-    // TEXT
     html += `<div class="text">${post.text || ""}</div>`;
 
     div.innerHTML = html;
@@ -114,7 +150,6 @@ function render(posts) {
   });
 }
 
-// 🔥 CARREGA POSTS DO GITHUB (SEM CACHE)
 fetch("posts.json?cache=" + Date.now())
   .then(res => res.json())
   .then(data => render(data))
