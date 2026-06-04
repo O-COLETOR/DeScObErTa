@@ -154,13 +154,32 @@
       box-sizing: border-box;
     }
 
-    .post img.main-image {
+    /* Container esqueleto para evitar que o layout quebre enquanto a imagem baixa */
+    .image-container {
       width: 40%;
-      display: block;
+      min-height: 160px;
       margin: 0 auto 15px auto;
+      background: #1f1f30;
       border-radius: 6px;
-      max-width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .post img.main-image {
+      width: 100%;
       height: auto;
+      display: block;
+      max-width: 100%;
+      opacity: 0;
+      transition: opacity 0.3s ease-in-out;
+    }
+
+    /* Classe ativada via JavaScript assim que a imagem termina de baixar */
+    .post img.main-image.loaded {
+      opacity: 1;
     }
 
     .text-shell {
@@ -304,9 +323,9 @@
         margin: 8px 0 12px 0;
       }
 
-      .post img.main-image {
+      .image-container {
         width: 85%;
-        margin: 0 auto 12px auto;
+        min-height: 220px;
       }
 
       .text {
@@ -361,7 +380,7 @@
     let commentsLoadedAt = 0;
     let postsData = [];
     let currentPostIndex = -1;
-    let nextPostIndex = -1; // Guarda o próximo post selecionado para preload
+    let nextPostIndex = -1; 
     let recentPostIndices = [];
     let navigationLocked = false;
     let advanceArmed = false;
@@ -636,7 +655,6 @@
         html += `<div class="tag">${escapeHtml(post.tag)}</div>`;
       }
 
-      // Substituído por um SVG nativo limpo e leve para evitar requisições lentas
       html += `
         <button class="comment-btn" type="button" aria-label="Abrir comentários" data-action="toggle-comments" data-post-id="${postId}">
           <svg viewBox="0 0 24 24" fill="none" stroke="#eaeaea" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -653,8 +671,13 @@
 
       html += `<div class="body-shell">`;
 
+      // Aplicação do wrapper esqueleto + evento onload para fade-in suave e decodificação assíncrona
       if (post.image && String(post.image).trim() !== "") {
-        html += `<img class="main-image" src="${escapeHtml(post.image)}" alt="">`;
+        html += `
+          <div class="image-container">
+            <img class="main-image" src="${escapeHtml(post.image)}" decoding="async" alt="" onload="this.classList.add('loaded')">
+          </div>
+        `;
       }
 
       html += `
@@ -685,12 +708,11 @@
       currentPostIndex = index;
       viewer.replaceChildren(createPostElement(postsData[index], index));
       
-      // Carrega os comentários de forma não-bloqueante
       loadComments(false).then(() => renderComments(`post_${index}`));
       window.scrollTo(0, 0);
       advanceArmed = false;
 
-      // [PRELOAD ENGINE]: Sorteia o PRÓXIMO post e força o download da imagem dele em background
+      // O motor de Preload continua ativo puxando a próxima imagem da lista externa em background
       nextPostIndex = pickNextPostIndex();
       if (nextPostIndex >= 0 && postsData[nextPostIndex].image) {
         const imgPreload = new Image();
@@ -706,7 +728,6 @@
         navigationLocked = false;
       }, 550);
 
-      // Se o próximo post já foi pré-selecionado e pré-carregado, vai direto para ele
       if (nextPostIndex >= 0) {
         showPost(nextPostIndex);
       } else {
@@ -834,7 +855,6 @@
           return r.json();
         });
 
-        // Carrega comentários de forma totalmente assíncrona, sem prender o init
         loadComments(true).catch(err => {
           console.error(err);
           commentsByPost = {};
@@ -848,7 +868,6 @@
           return;
         }
 
-        // Renderiza o primeiro imediatamente assim que o posts.json chega
         showPost(pickNextPostIndex());
       } catch (err) {
         console.error(err);
