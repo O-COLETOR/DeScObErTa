@@ -34,12 +34,6 @@ button {
   margin:10px 0;
   border-radius:8px;
 }
-
-.small-btn {
-  width:49%;
-  display:inline-block;
-  margin-top:5px;
-}
 </style>
 </head>
 
@@ -51,6 +45,7 @@ button {
 
 <input id="title" placeholder="Título">
 <input id="image" placeholder="Imagem (URL)">
+<input id="tag" placeholder="TAG">
 <textarea id="text" placeholder="Texto"></textarea>
 
 <button onclick="salvarPost()">Salvar post</button>
@@ -71,9 +66,10 @@ function savePosts(posts) {
   localStorage.setItem("posts", JSON.stringify(posts));
 }
 
-function limparForm() {
+function limpar() {
   document.getElementById("title").value = "";
   document.getElementById("image").value = "";
+  document.getElementById("tag").value = "";
   document.getElementById("text").value = "";
   editIndex = null;
 }
@@ -84,6 +80,7 @@ function salvarPost() {
   const newPost = {
     title: document.getElementById("title").value,
     image: document.getElementById("image").value,
+    tag: document.getElementById("tag").value,
     text: document.getElementById("text").value
   };
 
@@ -94,7 +91,7 @@ function salvarPost() {
   }
 
   savePosts(posts);
-  limparForm();
+  limpar();
   render();
 }
 
@@ -102,9 +99,10 @@ function editar(i) {
   let posts = getPosts();
   let p = posts[i];
 
-  document.getElementById("title").value = p.title;
-  document.getElementById("image").value = p.image;
-  document.getElementById("text").value = p.text;
+  document.getElementById("title").value = p.title || "";
+  document.getElementById("image").value = p.image || "";
+  document.getElementById("tag").value = p.tag || "";
+  document.getElementById("text").value = p.text || "";
 
   editIndex = i;
 }
@@ -126,9 +124,11 @@ function render() {
     div.className = "post-box";
 
     div.innerHTML = `
-      <b>${p.title}</b><br><br>
-      <button class="small-btn" onclick="editar(${i})">Editar</button>
-      <button class="small-btn" onclick="apagar(${i})">Apagar</button>
+      <b>${p.title || "(sem título)"}</b><br>
+      TAG: ${p.tag || "(sem tag)"}<br><br>
+
+      <button onclick="editar(${i})">Editar</button>
+      <button onclick="apagar(${i})">Apagar</button>
     `;
 
     lista.appendChild(div);
