@@ -685,7 +685,7 @@
       }
     }, { passive: true });
 
-    feed.addEventListener("click", (event) => {
+    viewer.addEventListener("click", (event) => {
       const actionEl = event.target.closest("[data-action]");
       if (!actionEl) return;
 
@@ -693,26 +693,6 @@
       const postId = actionEl.dataset.postId;
 
       if (!postId) return;
-
-      if (action === "toggle-comments") {
-        toggleComments(postId);
-      } else if (action === "send-comment") {
-        sendComment(postId);
-      }
-    });
-
-    feed.addEventListener("keydown", (event) => {
-      const actionEl = event.target.closest("[data-action]");
-      if (!actionEl) return;
-
-      if (event.key !== "Enter" && event.key !== " ") return;
-
-      const action = actionEl.dataset.action;
-      const postId = actionEl.dataset.postId;
-
-      if (!postId) return;
-
-      event.preventDefault();
 
       if (action === "toggle-comments") {
         toggleComments(postId);
