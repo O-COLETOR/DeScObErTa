@@ -31,9 +31,11 @@
       padding: 10px;
     }
 
-    .post h2 {
+    .title {
       text-align: center;
       margin: 10px 0 15px 0;
+      font-weight: bold;
+      font-size: 18px;
     }
 
     .post img {
@@ -43,9 +45,7 @@
       border-radius: 6px;
     }
 
-    .post p {
-      padding: 10px;
-      margin: 0;
+    .text {
       text-align: justify;
       line-height: 1.6;
       font-family: "Courier New", monospace;
@@ -70,17 +70,15 @@ const defaultPosts = [
   {
     title: "O Olho no Céu",
     image: "https://picsum.photos/600/300",
-    text: "RELATÓRIO DE OBSERVAÇÃO 001\n\nEntidade visual detectada em órbita lunar.\nComportamento: estático.\nResposta a estímulos: inexistente."
+    text: "RELATO 001\nEntidade observada em órbita lunar."
   },
   {
-    title: "O Canto do Seu Quarto",
-    image: "https://picsum.photos/601/300",
-    text: "RELATÓRIO DE OCORRÊNCIA 014\n\nÁrea apresenta anomalia de iluminação.\nA luz não interage com o espaço delimitado.\nContato visual prolongado causa desconforto."
+    title: "Texto solto",
+    text: "RELATO SEM CLASSIFICAÇÃO\nAlguns eventos não possuem origem conhecida."
   },
   {
-    title: "A Rua que Não Existe",
     image: "https://picsum.photos/602/300",
-    text: "RELATÓRIO DE REGISTRO 027\n\nLocal inexistente em mapas físicos e digitais.\nTestemunhas relatam deslocamento involuntário ao tentar acesso."
+    text: "RELATO 019\nFenômeno sem identificação formal."
   }
 ];
 
@@ -101,12 +99,21 @@ function render() {
     const div = document.createElement("div");
     div.className = "post";
 
-    div.innerHTML = `
-      <h2>${post.title}</h2>
-      <img src="${post.image}">
-      <p>${post.text}</p>
-    `;
+    let html = "";
 
+    // título só aparece se existir
+    if (post.title && post.title.trim() !== "") {
+      html += `<div class="title">${post.title}</div>`;
+    }
+
+    // imagem só aparece se existir
+    if (post.image && post.image.trim() !== "") {
+      html += `<img src="${post.image}">`;
+    }
+
+    html += `<div class="text">${post.text || ""}</div>`;
+
+    div.innerHTML = html;
     feed.appendChild(div);
   });
 }
