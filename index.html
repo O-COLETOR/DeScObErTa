@@ -72,6 +72,18 @@
       z-index: 10;
     }
 
+    .tremor {
+      animation: tremor 0.12s infinite;
+    }
+
+    @keyframes tremor {
+      0% { transform: translate(0px, 0px) rotate(0deg); }
+      25% { transform: translate(1px, -1px) rotate(0.3deg); }
+      50% { transform: translate(-1px, 1px) rotate(-0.3deg); }
+      75% { transform: translate(1px, 1px) rotate(0.2deg); }
+      100% { transform: translate(0px, 0px) rotate(0deg); }
+    }
+
     @media (max-width: 600px) {
       .feed {
         width: 100%;
@@ -124,10 +136,15 @@ function shuffle(array) {
 
 function render(posts) {
   const shuffled = shuffle(posts);
+  const tremblingIndex = Math.floor(Math.random() * shuffled.length);
 
-  shuffled.forEach(post => {
+  shuffled.forEach((post, index) => {
     const div = document.createElement("div");
     div.className = "post";
+
+    if (index === tremblingIndex) {
+      div.classList.add("tremor");
+    }
 
     let html = "";
 
