@@ -15,120 +15,154 @@
       overflow: hidden;
     }
 
+    body {
+      margin: 0;
+    }
+
     h1 {
       text-align: center;
       padding: 20px;
       margin: 0;
+      flex: 0 0 auto;
     }
 
     #viewer {
       width: 100%;
       height: calc(100vh - 70px);
+      height: calc(100svh - 70px);
+      box-sizing: border-box;
+      padding: 20px 16px 16px 16px;
       display: flex;
       align-items: center;
       justify-content: center;
-      overflow: hidden;
+      overflow: visible;
     }
 
-    /* WRAPPER COM ANIMAÇÃO */
     .post-wrap {
-      width: min(700px, 100%);
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-
-      opacity: 0;
-      transform: translateY(25px);
-      transition: opacity 300ms ease, transform 300ms ease;
-    }
-
-    .post-wrap.active {
-      opacity: 1;
-      transform: translateY(0);
+      position: relative;
+      width: min(600px, 100%);
+      padding-right: 58px;
+      box-sizing: border-box;
+      overflow: visible;
     }
 
     .post {
+      position: relative;
       width: 100%;
-      height: 100%;
+      height: auto;
       background: #161622;
+      border-radius: 0;
+      padding: 10px;
+      box-sizing: border-box;
+      overflow: visible;
       display: flex;
       flex-direction: column;
-      padding: 12px;
-      box-sizing: border-box;
-      position: relative;
     }
 
     .title {
       text-align: center;
+      margin: 10px 0 15px 0;
       font-weight: bold;
       font-size: 18px;
-      margin: 10px 0;
       flex: 0 0 auto;
-    }
-
-    .post img.main-image {
-      width: 68%; /* +70% aproximado */
-      max-width: 100%;
-      margin: 0 auto 15px auto;
-      border-radius: 6px;
-    }
-
-    .text-shell {
-      flex: 1;
-      overflow: hidden;
-      position: relative;
-    }
-
-    .text {
-      font-family: "Courier New", monospace;
-      font-size: 14px;
-      line-height: 1.6;
-      white-space: pre-line;
-      text-align: justify;
-      overflow-y: auto;
-      height: 100%;
-      padding-right: 4px;
     }
 
     .tag {
       position: absolute;
       top: -14px;
-      right: -14px;
+      right: 10px;
       background: #2a2a3f;
+      color: #fff;
       padding: 5px 10px;
       font-size: 12px;
       border: 1px solid #444;
       text-transform: uppercase;
-      z-index: 10;
+      z-index: 12;
     }
 
     .comment-btn {
       position: absolute;
-      top: 38px;
-      right: -14px;
+      top: 34px;
+      right: 10px;
       width: 42px;
       height: 42px;
-      cursor: pointer;
-      z-index: 11;
-      background: transparent;
+      padding: 0;
       border: none;
+      background: transparent;
+      cursor: pointer;
+      user-select: none;
+      z-index: 11;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0.95;
     }
 
     .comment-btn img {
       width: 42px;
       height: 42px;
+      display: block;
+      object-fit: contain;
+      margin: 0;
+      border-radius: 0;
+      max-width: none;
+      max-height: none;
     }
 
-    /* OVERLAY DE COMENTÁRIOS */
+    .comment-btn:hover {
+      opacity: 1;
+    }
+
+    .body-shell {
+      position: relative;
+      flex: 0 0 auto;
+      max-height: calc(100svh - 210px);
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding-right: 2px;
+      box-sizing: border-box;
+    }
+
+    .post img.main-image {
+      width: 40%;
+      display: block;
+      margin: 0 auto 15px auto;
+      border-radius: 6px;
+      max-width: 100%;
+      height: auto;
+    }
+
+    .text-shell {
+      position: relative;
+      overflow: visible;
+    }
+
+    .text {
+      text-align: justify;
+      line-height: 1.6;
+      font-family: "Courier New", monospace;
+      font-size: 14px;
+      white-space: pre-line;
+      overflow-wrap: anywhere;
+    }
+
     .comment-box {
       position: absolute;
-      inset: 0;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 20;
       background: #0f0f18;
       padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #333;
       display: flex;
       flex-direction: column;
-      z-index: 20;
+      gap: 8px;
+      box-sizing: border-box;
+      overflow: visible;
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
     }
 
     .comment-box[hidden] {
@@ -136,8 +170,12 @@
     }
 
     .comment-list {
-      flex: 1;
+      flex: 1 1 auto;
+      min-height: 0;
       overflow-y: auto;
+      overflow-x: hidden;
+      margin-bottom: 0;
+      padding-right: 2px;
     }
 
     .comment {
@@ -145,21 +183,38 @@
       margin-bottom: 8px;
       border-bottom: 1px solid #222;
       padding-bottom: 5px;
+      line-height: 1.4;
+      word-break: break-word;
     }
 
     .comment-empty {
+      font-size: 13px;
       opacity: 0.7;
+      margin-bottom: 8px;
+    }
+
+    .comment-form {
+      flex: 0 0 auto;
     }
 
     .comment-form input,
     .comment-form textarea {
       width: 100%;
-      margin: 5px 0;
+      margin-top: 5px;
+      margin-bottom: 5px;
       background: #111;
       border: 1px solid #333;
-      color: #fff;
+      color: white;
       padding: 6px;
       border-radius: 5px;
+      box-sizing: border-box;
+      font-family: Arial, sans-serif;
+    }
+
+    .comment-form textarea {
+      min-height: 70px;
+      resize: vertical;
+      font-family: Arial, sans-serif;
     }
 
     .comment-form button {
@@ -169,6 +224,11 @@
       border: none;
       color: white;
       cursor: pointer;
+      border-radius: 5px;
+    }
+
+    .comment-form button:hover {
+      filter: brightness(1.1);
     }
 
     .hint {
@@ -177,7 +237,70 @@
       bottom: 10px;
       transform: translateX(-50%);
       font-size: 11px;
-      opacity: 0.5;
+      opacity: 0.55;
+      pointer-events: none;
+      z-index: 5;
+      white-space: nowrap;
+    }
+
+    @media (max-width: 600px) {
+      h1 {
+        padding: 16px 12px 10px 12px;
+        font-size: 20px;
+      }
+
+      #viewer {
+        height: calc(100vh - 58px);
+        height: calc(100svh - 58px);
+        padding: 16px 12px 12px 12px;
+      }
+
+      .post-wrap {
+        padding-right: 52px;
+      }
+
+      .post {
+        padding: 10px;
+        border-radius: 0;
+      }
+
+      .title {
+        font-size: 16px;
+        margin: 8px 0 12px 0;
+      }
+
+      .post img.main-image {
+        width: 85%;
+        margin: 0 auto 12px auto;
+      }
+
+      .text {
+        font-size: 13px;
+        line-height: 1.5;
+      }
+
+      .tag {
+        font-size: 11px;
+        top: -12px;
+        right: 8px;
+        padding: 4px 8px;
+      }
+
+      .comment-btn {
+        top: 30px;
+        right: 8px;
+        width: 42px;
+        height: 42px;
+      }
+
+      .comment-btn img {
+        width: 42px;
+        height: 42px;
+      }
+
+      .body-shell {
+        max-height: calc(100svh - 180px);
+      }
     }
   </style>
 </head>
@@ -185,199 +308,503 @@
 <body>
   <h1>Universal Local Anomalous Wiki</h1>
   <div id="viewer"></div>
-  <div class="hint">scroll / seta para baixo</div>
+  <div class="hint">role para baixo / seta para baixo para o próximo post</div>
 
-<script>
-"use strict";
+  <script>
+    "use strict";
 
-const viewer = document.getElementById("viewer");
+    const viewer = document.getElementById("viewer");
 
-const POSTS_URL = "posts.json";
-const COMMENTS_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRTN5WD-EWF91lN2HfSOa1vxvw1nSr9BXMcEnnw9Ss-iZbGnA5CZ9bspP2hxOVXsJ8Y3qySnEE0froN/pub?gid=1547364444&single=true&output=csv";
-const FORM_ACTION_URL = "https://docs.google.com/forms/u/0/d/e/1FAIpQLSddjs2c65DizDWs_Gzx4E1dLHdAmFa0Ir6T2MmUkPPJVWWIFA/formResponse";
+    const POSTS_URL = "posts.json";
+    const COMMENTS_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRTN5WD-EWF91lN2HfSOa1vxvw1nSr9BXMcEnnw9Ss-iZbGnA5CZ9bspP2hxOVXsJ8Y3qySnEE0froN/pub?gid=1547364444&single=true&output=csv";
+    const FORM_ACTION_URL = "https://docs.google.com/forms/u/0/d/e/1FAIpQLSddjs2c65DizDWs_Gzx4E1dLHdAmFa0Ir6T2MmUkPPJVWWIFA/formResponse";
 
-const COMMENT_NAME_KEY = "ula_comment_name";
+    const FORM_ENTRY_NAME = "entry.428724025";
+    const FORM_ENTRY_COMMENT = "entry.1423901132";
+    const FORM_ENTRY_POSTID = "entry.374539906";
 
-let postsData = [];
-let currentIndex = -1;
-let commentsByPost = {};
-let locked = false;
+    const COMMENT_NAME_KEY = "ula_comment_name";
+    const COMMENTS_CACHE_TTL_MS = 15000;
+    const RECENT_POST_LIMIT = 10;
 
-function escapeHtml(v){
-  return String(v??"")
-    .replace(/&/g,"&amp;")
-    .replace(/</g,"&lt;")
-    .replace(/>/g,"&gt;");
-}
+    let commentsByPost = {};
+    let commentsLoadedAt = 0;
+    let postsData = [];
+    let currentPostIndex = -1;
+    let recentPostIndices = [];
+    let navigationLocked = false;
+    let advanceArmed = false;
 
-/* ---------- COMMENTS (mantido simples) ---------- */
-
-async function loadComments(){
-  try{
-    const res = await fetch(COMMENTS_CSV_URL + "?cb=" + Date.now());
-    const text = await res.text();
-
-    commentsByPost = {};
-
-    const rows = text.split("\n").map(r => r.split(","));
-    for (let i=1;i<rows.length;i++){
-      const r = rows[i];
-      if (r.length < 3) continue;
-
-      const name = r[1];
-      const comment = r[2];
-      const postId = r[3];
-
-      if (!commentsByPost[postId]) commentsByPost[postId] = [];
-      commentsByPost[postId].push({name, comment});
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
     }
-  }catch(e){}
-}
 
-function renderComments(postId){
-  const box = document.getElementById("comments-"+postId);
-  if(!box) return;
+    function cacheBustUrl(url) {
+      return url + (url.includes("?") ? "&" : "?") + "cb=" + Date.now();
+    }
 
-  const list = commentsByPost[postId] || [];
+    function normalizePostId(value) {
+      const id = String(value ?? "").trim();
+      if (!id) return "";
+      if (/^post_/i.test(id)) return id;
+      if (/^\d+$/.test(id)) return `post_${id}`;
+      return id;
+    }
 
-  box.innerHTML = list.length
-    ? list.map(c=>`<div class="comment"><b>${escapeHtml(c.name)}</b>: ${escapeHtml(c.comment)}</div>`).join("")
-    : `<div class="comment-empty">Nenhum comentário</div>`;
-}
+    function detectDelimiter(text) {
+      const firstLine = text.replace(/\r/g, "").split("\n").find(line => line.trim() !== "") || "";
+      const tabs = (firstLine.match(/\t/g) || []).length;
+      const commas = (firstLine.match(/,/g) || []).length;
+      return tabs > commas ? "\t" : ",";
+    }
 
-/* ---------- POSTS ---------- */
+    function parseDelimitedText(text) {
+      const delimiter = detectDelimiter(text);
+      const rows = [];
+      let row = [];
+      let cell = "";
+      let inQuotes = false;
 
-function createPost(post, index){
-  const wrap = document.createElement("div");
-  wrap.className = "post-wrap";
+      const normalized = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
 
-  const postId = "post_" + index;
+      for (let i = 0; i < normalized.length; i++) {
+        const ch = normalized[i];
+        const next = normalized[i + 1];
 
-  wrap.innerHTML = `
-    <div class="post">
+        if (inQuotes) {
+          if (ch === '"') {
+            if (next === '"') {
+              cell += '"';
+              i++;
+            } else {
+              inQuotes = false;
+            }
+          } else {
+            cell += ch;
+          }
+        } else {
+          if (ch === '"') {
+            inQuotes = true;
+          } else if (ch === delimiter) {
+            row.push(cell);
+            cell = "";
+          } else if (ch === "\n") {
+            row.push(cell);
+            rows.push(row);
+            row = [];
+            cell = "";
+          } else {
+            cell += ch;
+          }
+        }
+      }
 
-      ${post.tag ? `<div class="tag">${escapeHtml(post.tag)}</div>` : ""}
+      row.push(cell);
+      rows.push(row);
 
-      <button class="comment-btn" data-id="${postId}">
-        <img src="https://png.pngtree.com/png-clipart/20240720/original/pngtree-comment-icon-png-image_15596549.png">
-      </button>
+      return rows.filter(r => !(r.length === 1 && r[0].trim() === ""));
+    }
 
-      ${post.title ? `<div class="title">${escapeHtml(post.title)}</div>` : ""}
+    function findIndexByPatterns(header, patterns, fallback) {
+      const idx = header.findIndex(cell => {
+        const value = String(cell || "").trim().toLowerCase();
+        return patterns.some(pattern => pattern.test(value));
+      });
 
-      ${post.image ? `<img class="main-image" src="${escapeHtml(post.image)}">` : ""}
+      return idx >= 0 ? idx : fallback;
+    }
 
-      <div class="text-shell">
-        <div class="text">${escapeHtml(post.text||"")}</div>
+    function rememberPostIndex(index) {
+      recentPostIndices.push(index);
+      if (recentPostIndices.length > RECENT_POST_LIMIT) {
+        recentPostIndices.shift();
+      }
+    }
 
-        <div class="comment-box" id="cbox-${postId}" hidden>
-          <div class="comment-list" id="comments-${postId}"></div>
-          <div class="comment-form">
-            <input id="name-${postId}" placeholder="Nome">
-            <textarea id="text-${postId}" placeholder="Comentário"></textarea>
-            <button onclick="send('${postId}')">Enviar</button>
+    function pickNextPostIndex() {
+      const total = postsData.length;
+      if (!total) return -1;
+
+      const blocked = new Set(recentPostIndices);
+      let candidates = [];
+
+      for (let i = 0; i < total; i++) {
+        if (!blocked.has(i)) candidates.push(i);
+      }
+
+      if (!candidates.length) {
+        candidates = Array.from({ length: total }, (_, i) => i);
+      }
+
+      const chosen = candidates[Math.floor(Math.random() * candidates.length)];
+      rememberPostIndex(chosen);
+      return chosen;
+    }
+
+    async function loadComments(force = false) {
+      const now = Date.now();
+      if (!force && commentsLoadedAt && (now - commentsLoadedAt) < COMMENTS_CACHE_TTL_MS) {
+        return commentsByPost;
+      }
+
+      try {
+        const res = await fetch(cacheBustUrl(COMMENTS_CSV_URL));
+        if (!res.ok) {
+          throw new Error(`Falha ao carregar CSV: HTTP ${res.status}`);
+        }
+
+        const text = await res.text();
+        const rows = parseDelimitedText(text);
+
+        commentsByPost = {};
+        commentsLoadedAt = Date.now();
+
+        if (!rows.length) return commentsByPost;
+
+        const header = rows[0].map(v => String(v || "").trim().toLowerCase());
+
+        const nameIdx = findIndexByPatterns(header, [/nome de acesso/, /^nome$/, /nome/], 1);
+        const commentIdx = findIndexByPatterns(header, [/comentário/, /comentario/, /^texto$/, /coment/], 2);
+        const postIdx = findIndexByPatterns(header, [/post[_ ]?id/, /post id/, /id do post/], 3);
+
+        for (const row of rows.slice(1)) {
+          const name = String(row[nameIdx] || "").trim();
+          const comment = String(row[commentIdx] || "").trim();
+          const postId = normalizePostId(row[postIdx]);
+
+          if (!name || !comment || !postId) continue;
+
+          if (!commentsByPost[postId]) commentsByPost[postId] = [];
+          commentsByPost[postId].push({ name, comment });
+        }
+
+        return commentsByPost;
+      } catch (err) {
+        console.error("Erro ao carregar comentários:", err);
+        commentsByPost = {};
+        commentsLoadedAt = Date.now();
+        return commentsByPost;
+      }
+    }
+
+    function renderComments(postId) {
+      const box = document.getElementById(`comments-${postId}`);
+      if (!box) return;
+
+      const list = commentsByPost[postId] || [];
+
+      if (!list.length) {
+        box.innerHTML = `<div class="comment-empty">Nenhum comentário ainda.</div>`;
+        return;
+      }
+
+      box.innerHTML = list.map(c => `
+        <div class="comment"><b>${escapeHtml(c.name)}</b>: ${escapeHtml(c.comment)}</div>
+      `).join("");
+    }
+
+    async function toggleComments(postId) {
+      const el = document.getElementById(`cbox-${postId}`);
+      if (!el) return;
+
+      const willOpen = el.hidden;
+      el.hidden = !willOpen;
+
+      if (willOpen) {
+        const nameField = document.getElementById(`name-${postId}`);
+        const savedName = localStorage.getItem(COMMENT_NAME_KEY) || "";
+        if (nameField && !nameField.value.trim() && savedName) {
+          nameField.value = savedName;
+        }
+
+        await loadComments(false);
+        renderComments(postId);
+      }
+    }
+
+    function sendComment(postId) {
+      const nameField = document.getElementById(`name-${postId}`);
+      const textField = document.getElementById(`text-${postId}`);
+
+      if (!nameField || !textField) return;
+
+      const name = String(nameField.value || "").trim();
+      const text = String(textField.value || "").trim();
+
+      if (!name || !text) {
+        alert("Preencha o nome e o comentário.");
+        return;
+      }
+
+      localStorage.setItem(COMMENT_NAME_KEY, name);
+
+      const form = document.createElement("form");
+      form.method = "POST";
+      form.action = FORM_ACTION_URL;
+      form.target = "comment_submit_frame";
+      form.style.display = "none";
+
+      const data = [
+        [FORM_ENTRY_NAME, name],
+        [FORM_ENTRY_COMMENT, text],
+        [FORM_ENTRY_POSTID, postId],
+        ["fvv", "1"],
+        ["pageHistory", "0"],
+        ["fbzx", String(Date.now())],
+        ["submissionTimestamp", String(Date.now())]
+      ];
+
+      for (const [key, value] of data) {
+        const input = document.createElement("input");
+        input.type = "hidden";
+        input.name = key;
+        input.value = value;
+        form.appendChild(input);
+      }
+
+      document.body.appendChild(form);
+      form.submit();
+
+      setTimeout(() => {
+        form.remove();
+      }, 1000);
+
+      textField.value = "";
+
+      setTimeout(async () => {
+        await loadComments(true);
+        renderComments(postId);
+      }, 1500);
+    }
+
+    function createPostElement(post, index) {
+      const wrap = document.createElement("section");
+      wrap.className = "post-wrap";
+      wrap.dataset.postId = `post_${index}`;
+
+      const postId = `post_${index}`;
+      const storedName = escapeHtml(localStorage.getItem(COMMENT_NAME_KEY) || "");
+
+      let html = "";
+
+      if (post.tag && String(post.tag).trim() !== "") {
+        html += `<div class="tag">${escapeHtml(post.tag)}</div>`;
+      }
+
+      html += `
+        <button class="comment-btn" type="button" aria-label="Abrir comentários" data-action="toggle-comments" data-post-id="${postId}">
+          <img src="https://png.pngtree.com/png-clipart/20240720/original/pngtree-comment-icon-png-image_15596549.png" alt="">
+        </button>
+      `;
+
+      html += `<article class="post">`;
+
+      if (post.title && String(post.title).trim() !== "") {
+        html += `<div class="title">${escapeHtml(post.title)}</div>`;
+      }
+
+      html += `<div class="body-shell">`;
+
+      if (post.image && String(post.image).trim() !== "") {
+        html += `<img class="main-image" src="${escapeHtml(post.image)}" alt="">`;
+      }
+
+      html += `
+          <div class="text-shell">
+            <div class="text">${escapeHtml(post.text || "")}</div>
+
+            <div class="comment-box" id="cbox-${postId}" hidden>
+              <div class="comment-list" id="comments-${postId}"></div>
+
+              <div class="comment-form">
+                <input id="name-${postId}" value="${storedName}" placeholder="Nome de acesso">
+                <textarea id="text-${postId}" placeholder="Comentário"></textarea>
+                <button type="button" data-action="send-comment" data-post-id="${postId}">Enviar</button>
+              </div>
+            </div>
           </div>
         </div>
+      </article>
+      `;
 
-      </div>
-    </div>
-  `;
-
-  return wrap;
-}
-
-function show(index){
-  if(index<0||index>=postsData.length) return;
-
-  currentIndex = index;
-
-  const old = viewer.querySelector(".post-wrap");
-  const el = createPost(postsData[index], index);
-
-  viewer.appendChild(el);
-
-  requestAnimationFrame(()=>{
-    el.classList.add("active");
-    if(old){
-      old.classList.remove("active");
-      setTimeout(()=>old.remove(),300);
+      wrap.innerHTML = html;
+      return wrap;
     }
-  });
 
-  loadComments().then(()=>renderComments("post_"+index));
-}
+    function showPost(index) {
+      if (index < 0 || index >= postsData.length) return;
 
-/* ---------- NAV ---------- */
+      currentPostIndex = index;
+      viewer.replaceChildren(createPostElement(postsData[index], index));
+      loadComments(false).then(() => renderComments(`post_${index}`));
+      window.scrollTo(0, 0);
+      advanceArmed = false;
+    }
 
-function next(){
-  if(locked) return;
-  locked = true;
+    function advanceToNextPost() {
+      if (navigationLocked) return;
+      navigationLocked = true;
 
-  setTimeout(()=>locked=false,500);
+      setTimeout(() => {
+        navigationLocked = false;
+      }, 550);
 
-  const i = (currentIndex + 1) % postsData.length;
-  show(i);
-}
+      const nextIndex = pickNextPostIndex();
+      if (nextIndex >= 0) {
+        showPost(nextIndex);
+      }
+    }
 
-document.addEventListener("wheel",(e)=>{
-  if(e.deltaY>0){
-    e.preventDefault();
-    next();
-  }
-},{passive:false});
+    function isEditableTarget(target) {
+      if (!(target instanceof Element)) return false;
+      return Boolean(target.closest("input, textarea, select, [contenteditable='true']"));
+    }
 
-document.addEventListener("keydown",(e)=>{
-  if(["ArrowDown"," ","Enter"].includes(e.key)){
-    e.preventDefault();
-    next();
-  }
-});
+    function isInsideCommentBox(target) {
+      if (!(target instanceof Element)) return false;
+      return Boolean(target.closest(".comment-box"));
+    }
 
-/* ---------- COMMENTS TOGGLE ---------- */
+    function getScrollableContainer(target) {
+      if (!(target instanceof Element)) return null;
+      return target.closest(".comment-list") || target.closest(".body-shell");
+    }
 
-document.addEventListener("click",(e)=>{
-  const btn = e.target.closest(".comment-btn");
-  if(!btn) return;
+    function canScrollDown(el) {
+      return el.scrollTop + el.clientHeight < el.scrollHeight - 1;
+    }
 
-  const id = btn.dataset.id;
-  const box = document.getElementById("cbox-"+id);
-  if(!box) return;
+    function canScrollUp(el) {
+      return el.scrollTop > 1;
+    }
 
-  box.hidden = !box.hidden;
+    document.addEventListener("wheel", (event) => {
+      const scroller = getScrollableContainer(event.target);
 
-  if(!box.hidden){
-    renderComments(id);
-  }
-});
+      if (scroller) {
+        if (event.deltaY > 0 && canScrollDown(scroller)) {
+          advanceArmed = false;
+          return;
+        }
 
-/* ---------- SEND ---------- */
+        if (event.deltaY < 0 && canScrollUp(scroller)) {
+          advanceArmed = false;
+          return;
+        }
+      }
 
-window.send = function(postId){
-  const n = document.getElementById("name-"+postId);
-  const t = document.getElementById("text-"+postId);
+      if (event.deltaY > 0) {
+        event.preventDefault();
 
-  fetch(FORM_ACTION_URL,{
-    method:"POST",
-    body:new URLSearchParams({
-      "entry.428724025": n.value,
-      "entry.1423901132": t.value,
-      "entry.374539906": postId
-    })
-  });
+        if (advanceArmed) {
+          advanceArmed = false;
+          advanceToNextPost();
+        } else {
+          advanceArmed = true;
+        }
+      } else if (event.deltaY < 0) {
+        advanceArmed = false;
+      }
+    }, { passive: false });
 
-  t.value="";
-  setTimeout(()=>loadComments().then(()=>renderComments(postId)),1000);
-}
+    document.addEventListener("keydown", (event) => {
+      if (isEditableTarget(document.activeElement)) return;
 
-/* ---------- INIT ---------- */
+      if (event.key === "ArrowDown" || event.key === "PageDown" || event.key === " " || event.key === "Enter") {
+        event.preventDefault();
+        advanceToNextPost();
+      }
+    });
 
-(async function init(){
-  const posts = await fetch(POSTS_URL).then(r=>r.json());
-  postsData = posts;
+    let touchStartY = 0;
+    let touchStartTarget = null;
 
-  await loadComments();
-  show(0);
-})();
-</script>
+    document.addEventListener("touchstart", (event) => {
+      const touch = event.touches[0];
+      touchStartY = touch.clientY;
+      touchStartTarget = event.target instanceof Element ? event.target : null;
+    }, { passive: true });
 
+    document.addEventListener("touchend", (event) => {
+      if (isInsideCommentBox(touchStartTarget) || isEditableTarget(touchStartTarget)) return;
+
+      const touch = event.changedTouches[0];
+      const deltaY = touch.clientY - touchStartY;
+      const scroller = getScrollableContainer(touchStartTarget);
+
+      if (deltaY < -60) {
+        if (scroller && canScrollDown(scroller)) {
+          advanceArmed = false;
+          return;
+        }
+
+        if (advanceArmed) {
+          advanceArmed = false;
+          advanceToNextPost();
+        } else {
+          advanceArmed = true;
+        }
+      } else if (deltaY > 60) {
+        advanceArmed = false;
+      }
+    }, { passive: true });
+
+    viewer.addEventListener("click", (event) => {
+      const actionEl = event.target.closest("[data-action]");
+      if (!actionEl) return;
+
+      const action = actionEl.dataset.action;
+      const postId = actionEl.dataset.postId;
+
+      if (!postId) return;
+
+      if (action === "toggle-comments") {
+        toggleComments(postId);
+      } else if (action === "send-comment") {
+        sendComment(postId);
+      }
+    });
+
+    const submitFrame = document.createElement("iframe");
+    submitFrame.name = "comment_submit_frame";
+    submitFrame.style.display = "none";
+    document.body.appendChild(submitFrame);
+
+    async function init() {
+      try {
+        const postsPromise = fetch(cacheBustUrl(POSTS_URL)).then(async (r) => {
+          if (!r.ok) {
+            throw new Error(`Falha ao carregar posts.json: HTTP ${r.status}`);
+          }
+          return r.json();
+        });
+
+        const commentsPromise = loadComments(true).catch(err => {
+          console.error(err);
+          commentsByPost = {};
+        });
+
+        const [posts] = await Promise.all([postsPromise, commentsPromise]);
+        postsData = Array.isArray(posts) ? posts : [];
+
+        if (!postsData.length) {
+          viewer.innerHTML = "<p>Sem posts no momento.</p>";
+          return;
+        }
+
+        showPost(pickNextPostIndex());
+      } catch (err) {
+        console.error(err);
+        viewer.innerHTML = "<p>Erro ao carregar posts.json</p>";
+      }
+    }
+
+    init();
+  </script>
 </body>
 </html>
