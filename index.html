@@ -23,6 +23,7 @@
       margin: auto;
       padding: 10px;
       box-sizing: border-box;
+      overflow: visible;
     }
 
     .post {
@@ -66,23 +67,23 @@
 
     .tag {
       position: absolute;
-      top: -10px;
-      right: -10px;
+      top: -12px;
+      right: -12px;
       background: #2a2a3f;
       color: #fff;
       padding: 5px 10px;
       font-size: 12px;
       border: 1px solid #444;
       text-transform: uppercase;
-      z-index: 10;
+      z-index: 12;
     }
 
     .comment-btn {
       position: absolute;
       top: 28px;
-      right: -10px;
-      width: 30px;
-      height: 30px;
+      right: -12px;
+      width: 32px;
+      height: 32px;
       padding: 0;
       border: none;
       background: transparent;
@@ -96,8 +97,8 @@
     }
 
     .comment-btn img {
-      width: 42px;
-      height: 42px;
+      width: 30px;
+      height: 30px;
       display: block;
       object-fit: contain;
       margin: 0;
@@ -191,7 +192,7 @@
     @media (max-width: 600px) {
       .feed {
         width: 100%;
-        padding: 8px;
+        padding: 14px 12px;
       }
 
       .post {
@@ -218,13 +219,13 @@
       .tag {
         font-size: 11px;
         top: -8px;
-        right: -8px;
+        right: -6px;
         padding: 4px 8px;
       }
 
       .comment-btn {
-        top: 24px;
-        right: -8px;
+        top: 26px;
+        right: -6px;
         width: 28px;
         height: 28px;
       }
@@ -261,8 +262,21 @@
     const COMMENT_NAME_KEY = "ula_comment_name";
     const COMMENTS_CACHE_TTL_MS = 15000;
 
+    const INITIAL_BATCH_SIZE = 6;
+    const LOAD_MORE_BATCH_SIZE = 2;
+    const RECENT_POST_LIMIT = 10;
+
+    const feedSentinel = document.createElement("div");
+    feedSentinel.id = "feed-sentinel";
+    feedSentinel.style.height = "1px";
+    feedSentinel.style.width = "100%";
+
     let commentsByPost = {};
     let commentsLoadedAt = 0;
+    let postsData = [];
+    let recentPostIndices = [];
+    let feedObserver = null;
+    let loadingMore = false;
 
     function escapeHtml(value) {
       return String(value ?? "")
@@ -354,6 +368,33 @@
       });
 
       return idx >= 0 ? idx : fallback;
+    }
+
+    function rememberPostIndex(index) {
+      recentPostIndices.push(index);
+      if (recentPostIndices.length > RECENT_POST_LIMIT) {
+        recentPostIndices.shift();
+      }
+    }
+
+    function pickNextPostIndex() {
+      const total = postsData.length;
+      if (!total) return -1;
+
+      const blocked = new Set(recentPostIndices);
+      let candidates = [];
+
+      for (let i = 0; i < total; i++) {
+        if (!blocked.has(i)) candidates.push(i);
+      }
+
+      if (!candidates.length) {
+        candidates = Array.from({ length: total }, (_, i) => i);
+      }
+
+      const chosen = candidates[Math.floor(Math.random() * candidates.length)];
+      rememberPostIndex(chosen);
+      return chosen;
     }
 
     async function loadComments(force = false) {
@@ -521,7 +562,7 @@
 
       html += `
         <button class="comment-btn" type="button" aria-label="Abrir comentários" data-action="toggle-comments" data-post-id="${postId}">
-          <img src="https://png.pngtree.com/png-clipart/20240720/original/pngtree-comment-icon-png-image_15596549.png" alt="">
+          <img src="https://pbs.twimg.com/profile_images/2018733234251612160/pLCie90k_400x400.jpg" alt="">
         </button>
       `;
 
@@ -553,21 +594,54 @@
       return div;
     }
 
-    function render(posts) {
-      feed.replaceChildren();
+    function appendNextPost() {
+      const index = pickNextPostIndex();
+      if (index < 0) return false;
 
-      const postsWithIds = posts.map((post, index) => ({
-        ...post,
-        postId: `post_${index}`
-      }));
+      const element = createPostElement(postsData[index], index);
+      feed.insertBefore(element, feedSentinel);
+      renderComments(`post_${index}`);
+      return true;
+    }
 
-      const shuffled = shuffle([...postsWithIds]);
-
-      for (const post of shuffled) {
-        const element = createPostElement(post, Number(post.postId.replace("post_", "")));
-        feed.appendChild(element);
-        renderComments(post.postId);
+    function appendBatch(count) {
+      let appended = 0;
+      for (let i = 0; i < count; i++) {
+        if (!appendNextPost()) break;
+        appended++;
       }
+      return appended;
+    }
+
+    function setupInfiniteLoading() {
+      if (feedObserver) {
+        feedObserver.disconnect();
+      }
+
+      feedObserver = new IntersectionObserver((entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting && !loadingMore) {
+            loadingMore = true;
+            setTimeout(() => {
+              appendBatch(LOAD_MORE_BATCH_SIZE);
+              loadingMore = false;
+            }, 0);
+          }
+        }
+      }, {
+        root: null,
+        rootMargin: "700px 0px 700px 0px",
+        threshold: 0.01
+      });
+
+      feedObserver.observe(feedSentinel);
+    }
+
+    function renderInitialFeed() {
+      feed.replaceChildren();
+      feed.appendChild(feedSentinel);
+      appendBatch(INITIAL_BATCH_SIZE);
+      setupInfiniteLoading();
     }
 
     feed.addEventListener("click", (event) => {
@@ -626,7 +700,8 @@
         });
 
         const [posts] = await Promise.all([postsPromise, commentsPromise]);
-        render(posts);
+        postsData = Array.isArray(posts) ? posts : [];
+        renderInitialFeed();
       } catch (err) {
         console.error(err);
         feed.innerHTML = "<p>Erro ao carregar posts.json</p>";
