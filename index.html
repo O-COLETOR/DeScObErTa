@@ -32,6 +32,7 @@
       border-radius: 0;
       padding: 10px;
       box-sizing: border-box;
+      overflow: visible;
     }
 
     .title {
@@ -48,6 +49,11 @@
       border-radius: 6px;
       max-width: 100%;
       height: auto;
+    }
+
+    .text-shell {
+      position: relative;
+      overflow: visible;
     }
 
     .text {
@@ -82,10 +88,11 @@
       background: transparent;
       cursor: pointer;
       user-select: none;
-      z-index: 9;
+      z-index: 11;
       display: flex;
       align-items: center;
       justify-content: center;
+      opacity: 0.9;
     }
 
     .comment-btn img {
@@ -93,23 +100,21 @@
       height: 28px;
       display: block;
       object-fit: contain;
-      filter: none;
       margin: 0;
       border-radius: 0;
+      max-width: none;
+      max-height: none;
     }
 
     .comment-btn:hover {
-      opacity: 0.9;
-    }
-
-    .text-shell {
-      position: relative;
-      margin-top: 0;
+      opacity: 1;
     }
 
     .comment-box {
       position: absolute;
-      inset: 0;
+      top: 0;
+      left: 0;
+      right: 0;
       z-index: 20;
       background: #0f0f18;
       padding: 10px;
@@ -119,7 +124,8 @@
       flex-direction: column;
       gap: 8px;
       box-sizing: border-box;
-      overflow: hidden;
+      overflow: visible;
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
     }
 
     .comment-box[hidden] {
@@ -127,7 +133,7 @@
     }
 
     .comment-list {
-      flex: 1;
+      max-height: 45vh;
       overflow-y: auto;
       margin-bottom: 0;
       padding-right: 2px;
@@ -226,6 +232,10 @@
       .comment-btn img {
         width: 26px;
         height: 26px;
+      }
+
+      .comment-list {
+        max-height: 50vh;
       }
     }
   </style>
@@ -511,7 +521,7 @@
 
       html += `
         <button class="comment-btn" type="button" aria-label="Abrir comentários" data-action="toggle-comments" data-post-id="${postId}">
-          <img src="https://e7.pngegg.com/pngimages/1021/112/png-clipart-dungeons-dragons-demon-lord-out-of-the-abyss-symbol-demon.png" alt="">
+          <img src="https://pbs.twimg.com/profile_images/2018733234251612160/pLCie90k_400x400.jpg" alt="">
         </button>
       `;
 
