@@ -28,20 +28,29 @@
       margin: 15px 0;
       border-radius: 10px;
       overflow: hidden;
+      padding: 10px;
     }
 
     .post h2 {
-      margin: 10px;
+      text-align: center;
+      margin: 10px 0 15px 0;
     }
 
     .post img {
-      width: 100%;
+      width: 40%;
       display: block;
+      margin: 0 auto 15px auto;
+      border-radius: 6px;
     }
 
     .post p {
       padding: 10px;
       margin: 0;
+      text-align: justify;
+      line-height: 1.6;
+      font-family: "Courier New", monospace;
+      font-size: 14px;
+      white-space: pre-line;
     }
   </style>
 </head>
@@ -57,26 +66,24 @@ function getPosts() {
   return JSON.parse(localStorage.getItem("posts") || "[]");
 }
 
-// posts iniciais (caso ainda não tenha nada salvo)
 const defaultPosts = [
   {
     title: "O Olho no Céu",
     image: "https://picsum.photos/600/300",
-    text: "Um enorme olho flutuando próximo à órbita da Lua. Ele observa a Terra em silêncio absoluto."
+    text: "RELATÓRIO DE OBSERVAÇÃO 001\n\nEntidade visual detectada em órbita lunar.\nComportamento: estático.\nResposta a estímulos: inexistente."
   },
   {
     title: "O Canto do Seu Quarto",
     image: "https://picsum.photos/601/300",
-    text: "Mesmo iluminado, aquele canto nunca muda. Algo parece permanecer lá, fora de alcance."
+    text: "RELATÓRIO DE OCORRÊNCIA 014\n\nÁrea apresenta anomalia de iluminação.\nA luz não interage com o espaço delimitado.\nContato visual prolongado causa desconforto."
   },
   {
     title: "A Rua que Não Existe",
     image: "https://picsum.photos/602/300",
-    text: "Ela aparece em registros antigos, mas ninguém consegue encontrá-la no mundo real."
+    text: "RELATÓRIO DE REGISTRO 027\n\nLocal inexistente em mapas físicos e digitais.\nTestemunhas relatam deslocamento involuntário ao tentar acesso."
   }
 ];
 
-// salva padrão se ainda não existir posts
 if (!localStorage.getItem("posts")) {
   localStorage.setItem("posts", JSON.stringify(defaultPosts));
 }
