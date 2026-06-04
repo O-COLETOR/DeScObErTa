@@ -72,17 +72,16 @@
       z-index: 10;
     }
 
-    /* TREMORES (REDUZIDO PELA METADE) */
+    /* 🔻 tremor mais leve */
     .tremor {
       animation: tremor 0.12s infinite;
     }
 
     @keyframes tremor {
       0%   { transform: translate(0px, 0px) rotate(0deg); }
-      20%  { transform: translate(2px, -2px) rotate(1deg); }
-      40%  { transform: translate(-2px, 2px) rotate(-1deg); }
-      60%  { transform: translate(2px, 2px) rotate(1deg); }
-      80%  { transform: translate(-2px, -2px) rotate(-1deg); }
+      25%  { transform: translate(2px, -2px) rotate(0.5deg); }
+      50%  { transform: translate(-2px, 2px) rotate(-0.5deg); }
+      75%  { transform: translate(2px, 2px) rotate(0.5deg); }
       100% { transform: translate(0px, 0px) rotate(0deg); }
     }
 
@@ -136,25 +135,20 @@ function shuffle(array) {
   return array.sort(() => Math.random() - 0.5);
 }
 
-/* ENTIDADE */
-function shouldShowEntity() {
-  return Math.random() < 0.10;
-}
-
-/* TREMORES */
 function pickUniqueIndices(count, max) {
-  const indices = Array.from({ length: max }, (_, i) => i);
-  shuffle(indices);
-  return new Set(indices.slice(0, count));
+  const arr = Array.from({ length: max }, (_, i) => i);
+  shuffle(arr);
+  return new Set(arr.slice(0, count));
 }
 
-function getTremorCount(totalPosts) {
+/* 🎲 NOVAS CHANCES */
+function getTremorCount(total) {
   const r = Math.random();
 
-  if (r < 0.40) return Math.min(1, totalPosts);
-  if (r < 0.60) return Math.min(2, totalPosts);
-  if (r < 0.65) return Math.min(4, totalPosts);
-  if (r < 0.655) return totalPosts;
+  if (r < 0.20) return Math.min(1, total);   // 20% → 1 post
+  if (r < 0.35) return Math.min(2, total);   // 15% → 2 posts
+  if (r < 0.36) return Math.min(4, total);   // 1%  → 4 posts
+  if (r < 0.365) return total;               // 0.5% → todos
   return 0;
 }
 
@@ -195,36 +189,7 @@ function render(posts) {
 
 fetch("posts.json?cache=" + Date.now())
   .then(res => res.json())
-  .then(data => {
-    render(data);
-
-    if (shouldShowEntity()) {
-      const overlay = document.createElement("div");
-      overlay.className = "post";
-      overlay.style.position = "fixed";
-      overlay.style.top = "50%";
-      overlay.style.left = "50%";
-      overlay.style.transform = "translate(-50%, -50%)";
-      overlay.style.zIndex = "9999";
-      overlay.style.width = "80%";
-      overlay.style.maxWidth = "400px";
-      overlay.style.background = "#000";
-      overlay.style.border = "2px solid #444";
-      overlay.style.textAlign = "center";
-      overlay.style.padding = "15px";
-
-      overlay.innerHTML = `
-        <div class="title">TITULO</div>
-        <div class="text">eu to te vendo!</div>
-      `;
-
-      document.body.appendChild(overlay);
-
-      setTimeout(() => {
-        overlay.remove();
-      }, 40000);
-    }
-  })
+  .then(data => render(data))
   .catch(err => {
     console.error(err);
     feed.innerHTML = "<p>Erro ao carregar posts.json</p>";
