@@ -1,3 +1,16 @@
+Para resolver isso da forma mais limpa possível — e sem quebrar absolutamente nada das suas funções ou do visual atual —, a melhor estratégia é aplicar uma animação nativa via CSS diretamente no contêiner `.post-wrap`.
+
+Como o seu JavaScript reconstrói o elemento do post do zero a cada mudança (`viewer.replaceChildren`), o navegador vai rodar essa animação automaticamente toda vez que um novo post entrar na tela. É simples, elegante e totalmente seguro.
+
+Adicionei um efeito de **fade-in** combinado com um **leve deslize para cima** de 0.5 segundos, dando um toque bem sofisticado para a sua Wiki Anomalosa.
+
+---
+
+## O Código Pronto
+
+Aqui está o seu arquivo `index.html` completo e atualizado. É só copiar e colar:
+
+```html
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -44,6 +57,20 @@
       padding-right: 58px;
       box-sizing: border-box;
       overflow: visible;
+      /* Ativa a animação de transição ao carregar o post */
+      animation: fadeInPost 0.5s ease-out forwards;
+    }
+
+    /* Definição da animação de transição */
+    @keyframes fadeInPost {
+      from {
+        opacity: 0;
+        transform: translateY(15px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
 
     .post {
@@ -308,7 +335,7 @@
 <body>
   <h1>Universal Local Anomalous Wiki</h1>
   <div id="viewer"></div>
-  <div class="hint">role para baixo / seta para baixo para o próximo post</div>
+  <div class="hint">role para baixo / seta para baixo para o próximo relatóriot</div>
 
   <script>
     "use strict";
@@ -808,3 +835,5 @@
   </script>
 </body>
 </html>
+
+```
