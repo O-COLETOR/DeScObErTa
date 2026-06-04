@@ -72,17 +72,17 @@
       z-index: 10;
     }
 
-    /* TREMORES (ORIGINAL) */
+    /* TREMORES (REDUZIDO PELA METADE) */
     .tremor {
-      animation: tremor 0.08s infinite;
+      animation: tremor 0.12s infinite;
     }
 
     @keyframes tremor {
       0%   { transform: translate(0px, 0px) rotate(0deg); }
-      20%  { transform: translate(5px, -5px) rotate(2deg); }
-      40%  { transform: translate(-5px, 5px) rotate(-2deg); }
-      60%  { transform: translate(5px, 5px) rotate(2deg); }
-      80%  { transform: translate(-5px, -5px) rotate(-2deg); }
+      20%  { transform: translate(2px, -2px) rotate(1deg); }
+      40%  { transform: translate(-2px, 2px) rotate(-1deg); }
+      60%  { transform: translate(2px, 2px) rotate(1deg); }
+      80%  { transform: translate(-2px, -2px) rotate(-1deg); }
       100% { transform: translate(0px, 0px) rotate(0deg); }
     }
 
@@ -138,10 +138,10 @@ function shuffle(array) {
 
 /* ENTIDADE */
 function shouldShowEntity() {
-  return Math.random() < 0.22;
+  return Math.random() < 0.10;
 }
 
-/* TREMORES ORIGINAL */
+/* TREMORES */
 function pickUniqueIndices(count, max) {
   const indices = Array.from({ length: max }, (_, i) => i);
   shuffle(indices);
