@@ -53,7 +53,12 @@
 <div class="feed" id="feed"></div>
 
 <script>
-const posts = [
+function getPosts() {
+  return JSON.parse(localStorage.getItem("posts") || "[]");
+}
+
+// posts iniciais (caso ainda não tenha nada salvo)
+const defaultPosts = [
   {
     title: "O Olho no Céu",
     image: "https://picsum.photos/600/300",
@@ -71,25 +76,35 @@ const posts = [
   }
 ];
 
-// embaralhar posts
+// salva padrão se ainda não existir posts
+if (!localStorage.getItem("posts")) {
+  localStorage.setItem("posts", JSON.stringify(defaultPosts));
+}
+
 function shuffle(array) {
   return array.sort(() => Math.random() - 0.5);
 }
 
 const feed = document.getElementById("feed");
 
-shuffle(posts).forEach(post => {
-  const div = document.createElement("div");
-  div.className = "post";
+function render() {
+  let posts = shuffle(getPosts());
 
-  div.innerHTML = `
-    <h2>${post.title}</h2>
-    <img src="${post.image}">
-    <p>${post.text}</p>
-  `;
+  posts.forEach(post => {
+    const div = document.createElement("div");
+    div.className = "post";
 
-  feed.appendChild(div);
-});
+    div.innerHTML = `
+      <h2>${post.title}</h2>
+      <img src="${post.image}">
+      <p>${post.text}</p>
+    `;
+
+    feed.appendChild(div);
+  });
+}
+
+render();
 </script>
 
 </body>
