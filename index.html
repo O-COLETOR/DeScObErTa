@@ -73,31 +73,63 @@
 
     .comment-btn {
       position: absolute;
-      bottom: 8px;
-      right: 8px;
+      top: 28px;
+      right: -10px;
+      width: 30px;
+      height: 30px;
+      padding: 0;
+      border: none;
+      background: transparent;
       cursor: pointer;
-      font-size: 18px;
-      opacity: 0.8;
       user-select: none;
+      z-index: 9;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .comment-btn img {
+      width: 28px;
+      height: 28px;
+      display: block;
+      object-fit: contain;
+      filter: none;
+      margin: 0;
+      border-radius: 0;
+    }
+
+    .comment-btn:hover {
+      opacity: 0.9;
+    }
+
+    .text-shell {
+      position: relative;
+      margin-top: 0;
     }
 
     .comment-box {
-      display: none;
-      margin-top: 12px;
+      position: absolute;
+      inset: 0;
+      z-index: 20;
       background: #0f0f18;
       padding: 10px;
       border-radius: 8px;
       border: 1px solid #333;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      box-sizing: border-box;
+      overflow: hidden;
     }
 
-    .comment-box:not([hidden]) {
-      display: block;
+    .comment-box[hidden] {
+      display: none !important;
     }
 
     .comment-list {
-      max-height: 220px;
+      flex: 1;
       overflow-y: auto;
-      margin-bottom: 10px;
+      margin-bottom: 0;
       padding-right: 2px;
     }
 
@@ -182,6 +214,18 @@
         top: -8px;
         right: -8px;
         padding: 4px 8px;
+      }
+
+      .comment-btn {
+        top: 24px;
+        right: -8px;
+        width: 28px;
+        height: 28px;
+      }
+
+      .comment-btn img {
+        width: 26px;
+        height: 26px;
       }
     }
   </style>
@@ -465,6 +509,12 @@
         html += `<div class="tag">${escapeHtml(post.tag)}</div>`;
       }
 
+      html += `
+        <button class="comment-btn" type="button" aria-label="Abrir comentários" data-action="toggle-comments" data-post-id="${postId}">
+          <img src="https://e7.pngegg.com/pngimages/1021/112/png-clipart-dungeons-dragons-demon-lord-out-of-the-abyss-symbol-demon.png" alt="">
+        </button>
+      `;
+
       if (post.title && String(post.title).trim() !== "") {
         html += `<div class="title">${escapeHtml(post.title)}</div>`;
       }
@@ -473,18 +523,18 @@
         html += `<img src="${escapeHtml(post.image)}" alt="">`;
       }
 
-      html += `<div class="text">${escapeHtml(post.text || "")}</div>`;
-
-      html += `<div class="comment-btn" role="button" tabindex="0" data-action="toggle-comments" data-post-id="${postId}">💬</div>`;
-
       html += `
-        <div class="comment-box" id="cbox-${postId}" hidden>
-          <div class="comment-list" id="comments-${postId}"></div>
+        <div class="text-shell">
+          <div class="text">${escapeHtml(post.text || "")}</div>
 
-          <div class="comment-form">
-            <input id="name-${postId}" value="${storedName}" placeholder="Nome de acesso">
-            <textarea id="text-${postId}" placeholder="Comentário"></textarea>
-            <button type="button" data-action="send-comment" data-post-id="${postId}">Enviar</button>
+          <div class="comment-box" id="cbox-${postId}" hidden>
+            <div class="comment-list" id="comments-${postId}"></div>
+
+            <div class="comment-form">
+              <input id="name-${postId}" value="${storedName}" placeholder="Nome de acesso">
+              <textarea id="text-${postId}" placeholder="Comentário"></textarea>
+              <button type="button" data-action="send-comment" data-post-id="${postId}">Enviar</button>
+            </div>
           </div>
         </div>
       `;
