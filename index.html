@@ -44,11 +44,9 @@
       padding-right: 58px;
       box-sizing: border-box;
       overflow: visible;
-      /* Ativa a animação de transição ao carregar o post */
       animation: fadeInPost 0.5s ease-out forwards;
     }
 
-    /* Definição da animação de transição */
     @keyframes fadeInPost {
       from {
         opacity: 0;
@@ -73,7 +71,6 @@
       flex-direction: column;
     }
 
-    /* Customização para quando os comentários substituem o post */
     .post.comments-open {
       height: calc(100svh - 165px) !important;
     }
@@ -132,22 +129,19 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      opacity: 0.95;
+      opacity: 0.85;
+      transition: opacity 0.2s, transform 0.2s;
     }
 
-    .comment-btn img {
-      width: 42px;
-      height: 42px;
+    .comment-btn svg {
+      width: 34px;
+      height: 34px;
       display: block;
-      object-fit: contain;
-      margin: 0;
-      border-radius: 0;
-      max-width: none;
-      max-height: none;
     }
 
     .comment-btn:hover {
       opacity: 1;
+      transform: scale(1.05);
     }
 
     .body-shell {
@@ -334,11 +328,6 @@
         height: 42px;
       }
 
-      .comment-btn img {
-        width: 42px;
-        height: 42px;
-      }
-
       .body-shell {
         max-height: calc(100svh - 180px);
       }
@@ -372,6 +361,7 @@
     let commentsLoadedAt = 0;
     let postsData = [];
     let currentPostIndex = -1;
+    let nextPostIndex = -1; // Guarda o próximo post selecionado para preload
     let recentPostIndices = [];
     let navigationLocked = false;
     let advanceArmed = false;
@@ -646,9 +636,12 @@
         html += `<div class="tag">${escapeHtml(post.tag)}</div>`;
       }
 
+      // Substituído por um SVG nativo limpo e leve para evitar requisições lentas
       html += `
         <button class="comment-btn" type="button" aria-label="Abrir comentários" data-action="toggle-comments" data-post-id="${postId}">
-          <img src="https://png.pngtree.com/png-clipart/20240720/original/pngtree-comment-icon-png-image_15596549.png" alt="">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#eaeaea" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+          </svg>
         </button>
       `;
 
@@ -691,9 +684,18 @@
 
       currentPostIndex = index;
       viewer.replaceChildren(createPostElement(postsData[index], index));
+      
+      // Carrega os comentários de forma não-bloqueante
       loadComments(false).then(() => renderComments(`post_${index}`));
       window.scrollTo(0, 0);
       advanceArmed = false;
+
+      // [PRELOAD ENGINE]: Sorteia o PRÓXIMO post e força o download da imagem dele em background
+      nextPostIndex = pickNextPostIndex();
+      if (nextPostIndex >= 0 && postsData[nextPostIndex].image) {
+        const imgPreload = new Image();
+        imgPreload.src = postsData[nextPostIndex].image;
+      }
     }
 
     function advanceToNextPost() {
@@ -704,9 +706,12 @@
         navigationLocked = false;
       }, 550);
 
-      const nextIndex = pickNextPostIndex();
-      if (nextIndex >= 0) {
-        showPost(nextIndex);
+      // Se o próximo post já foi pré-selecionado e pré-carregado, vai direto para ele
+      if (nextPostIndex >= 0) {
+        showPost(nextPostIndex);
+      } else {
+        const fallbackIndex = pickNextPostIndex();
+        if (fallbackIndex >= 0) showPost(fallbackIndex);
       }
     }
 
@@ -715,12 +720,6 @@
       return Boolean(target.closest("input, textarea, select, [contenteditable='true']"));
     }
 
-    function isInsideCommentBox(target) {
-      if (!(target instanceof Element)) return false;
-      return Boolean(target.closest(".comment-box"));
-    }
-
-    // Retorna a aba de comentário ou o corpo do post caso estejam rolando
     function getScrollableContainer(target) {
       if (!(target instanceof Element)) return null;
       return target.closest(".comment-list") || target.closest(".body-shell");
@@ -835,12 +834,13 @@
           return r.json();
         });
 
-        const commentsPromise = loadComments(true).catch(err => {
+        // Carrega comentários de forma totalmente assíncrona, sem prender o init
+        loadComments(true).catch(err => {
           console.error(err);
           commentsByPost = {};
         });
 
-        const [posts] = await Promise.all([postsPromise, commentsPromise]);
+        const posts = await postsPromise;
         postsData = Array.isArray(posts) ? posts : [];
 
         if (!postsData.length) {
@@ -848,6 +848,7 @@
           return;
         }
 
+        // Renderiza o primeiro imediatamente assim que o posts.json chega
         showPost(pickNextPostIndex());
       } catch (err) {
         console.error(err);
