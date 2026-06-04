@@ -30,7 +30,6 @@
       background: #161622;
       margin: 20px 0;
       border-radius: 10px;
-      overflow: visible;
       padding: 10px;
       box-sizing: border-box;
     }
@@ -48,7 +47,6 @@
       margin: 0 auto 15px auto;
       border-radius: 6px;
       max-width: 100%;
-      height: auto;
     }
 
     .text {
@@ -69,55 +67,53 @@
       font-size: 12px;
       border: 1px solid #444;
       text-transform: uppercase;
-      z-index: 10;
     }
 
-    /* 🔻 tremor mais leve */
-    .tremor {
-      animation: tremor 0.12s infinite;
+    /* botão comentários */
+    .comment-btn {
+      position: absolute;
+      bottom: 8px;
+      right: 8px;
+      cursor: pointer;
+      font-size: 18px;
+      opacity: 0.7;
     }
 
-    @keyframes tremor {
-      0%   { transform: translate(0px, 0px) rotate(0deg); }
-      25%  { transform: translate(2px, -2px) rotate(0.5deg); }
-      50%  { transform: translate(-2px, 2px) rotate(-0.5deg); }
-      75%  { transform: translate(2px, 2px) rotate(0.5deg); }
-      100% { transform: translate(0px, 0px) rotate(0deg); }
+    .comment-box {
+      display: none;
+      margin-top: 10px;
+      background: #0f0f18;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #333;
     }
 
-    @media (max-width: 600px) {
-      .feed {
-        width: 100%;
-        padding: 8px;
-      }
+    .comment {
+      font-size: 13px;
+      margin-bottom: 8px;
+      border-bottom: 1px solid #222;
+      padding-bottom: 5px;
+    }
 
-      .post {
-        margin: 12px 0;
-        padding: 10px;
-        border-radius: 8px;
-      }
+    .comment-form input,
+    .comment-form textarea {
+      width: 100%;
+      margin-top: 5px;
+      margin-bottom: 5px;
+      background: #111;
+      border: 1px solid #333;
+      color: white;
+      padding: 6px;
+      border-radius: 5px;
+    }
 
-      .title {
-        font-size: 16px;
-        margin: 8px 0 12px 0;
-      }
-
-      .post img {
-        width: 85%;
-        margin: 0 auto 12px auto;
-      }
-
-      .text {
-        font-size: 13px;
-        line-height: 1.5;
-      }
-
-      .tag {
-        font-size: 11px;
-        top: -8px;
-        right: -8px;
-        padding: 4px 8px;
-      }
+    .comment-form button {
+      width: 100%;
+      padding: 6px;
+      background: #2a2a3f;
+      border: none;
+      color: white;
+      cursor: pointer;
     }
   </style>
 </head>
@@ -125,75 +121,129 @@
 <body>
 
 <h1>Universal Local Anomalous Wiki</h1>
-
 <div class="feed" id="feed"></div>
 
 <script>
+
 const feed = document.getElementById("feed");
+
+/* 🔗 COLE AQUI SEU CSV DO GOOGLE SHEETS */
+const COMMENTS_CSV_URL = "COLE_SEU_LINK_AQUI";
+
+/* 🔗 COLE AQUI O ACTION DO GOOGLE FORM */
+const FORM_ACTION_URL = "COLE_O_ACTION_DO_GOOGLE_FORM_AQUI";
+
+let commentsByPost = {};
 
 function shuffle(array) {
   return array.sort(() => Math.random() - 0.5);
 }
 
-function pickUniqueIndices(count, max) {
-  const arr = Array.from({ length: max }, (_, i) => i);
-  shuffle(arr);
-  return new Set(arr.slice(0, count));
+/* ===== CARREGA COMENTÁRIOS ===== */
+async function loadComments() {
+  const res = await fetch(COMMENTS_CSV_URL);
+  const text = await res.text();
+
+  const lines = text.split("\n").slice(1);
+
+  commentsByPost = {};
+
+  lines.forEach(line => {
+    const cols = line.split(",");
+
+    const name = cols[1];
+    const comment = cols[2];
+    const postId = cols[3];
+
+    if (!commentsByPost[postId]) commentsByPost[postId] = [];
+    commentsByPost[postId].push({ name, comment });
+  });
 }
 
-/* 🎲 NOVAS CHANCES */
-function getTremorCount(total) {
-  const r = Math.random();
-
-  if (r < 0.20) return Math.min(1, total);   // 20% → 1 post
-  if (r < 0.35) return Math.min(2, total);   // 15% → 2 posts
-  if (r < 0.36) return Math.min(4, total);   // 1%  → 4 posts
-  if (r < 0.365) return total;               // 0.5% → todos
-  return 0;
-}
-
+/* ===== RENDER POSTS ===== */
 function render(posts) {
   const shuffled = shuffle([...posts]);
-
-  const tremorCount = getTremorCount(shuffled.length);
-  const tremorIndices = pickUniqueIndices(tremorCount, shuffled.length);
 
   shuffled.forEach((post, index) => {
     const div = document.createElement("div");
     div.className = "post";
 
-    if (tremorIndices.has(index)) {
-      div.classList.add("tremor");
-    }
+    const postId = index;
 
     let html = "";
 
-    if (post.tag && post.tag.trim() !== "") {
-      html += `<div class="tag">${post.tag}</div>`;
-    }
+    if (post.tag) html += `<div class="tag">${post.tag}</div>`;
+    if (post.title) html += `<div class="title">${post.title}</div>`;
+    if (post.image) html += `<img src="${post.image}">`;
 
-    if (post.title && post.title.trim() !== "") {
-      html += `<div class="title">${post.title}</div>`;
-    }
+    html += `<div class="text">${post.text}</div>`;
 
-    if (post.image && post.image.trim() !== "") {
-      html += `<img src="${post.image}" alt="">`;
-    }
+    /* BOTÃO */
+    html += `<div class="comment-btn" onclick="toggleComments(${postId})">💬</div>`;
 
-    html += `<div class="text">${post.text || ""}</div>`;
+    /* CAIXA */
+    html += `<div class="comment-box" id="cbox-${postId}">
+      <div id="comments-${postId}"></div>
+
+      <div class="comment-form">
+        <input id="name-${postId}" placeholder="Nome de acesso">
+        <textarea id="text-${postId}" placeholder="Comentário"></textarea>
+        <button onclick="sendComment(${postId})">Enviar</button>
+      </div>
+    </div>`;
 
     div.innerHTML = html;
     feed.appendChild(div);
+
+    renderComments(postId);
   });
 }
 
-fetch("posts.json?cache=" + Date.now())
-  .then(res => res.json())
-  .then(data => render(data))
-  .catch(err => {
-    console.error(err);
-    feed.innerHTML = "<p>Erro ao carregar posts.json</p>";
+/* ===== MOSTRAR COMENTÁRIOS ===== */
+function renderComments(postId) {
+  const box = document.getElementById(`comments-${postId}`);
+  if (!box) return;
+
+  const list = commentsByPost[postId] || [];
+
+  box.innerHTML = list.map(c =>
+    `<div class="comment"><b>${c.name}</b>: ${c.comment}</div>`
+  ).join("");
+}
+
+/* ===== ABRIR FECHAR ===== */
+function toggleComments(id) {
+  const el = document.getElementById(`cbox-${id}`);
+  el.style.display = el.style.display === "block" ? "none" : "block";
+}
+
+/* ===== ENVIAR COMENTÁRIO ===== */
+function sendComment(postId) {
+  const name = document.getElementById(`name-${postId}`).value;
+  const text = document.getElementById(`text-${postId}`).value;
+
+  const form = new FormData();
+  form.append("entry.post_id", postId);
+  form.append("entry.name", name);
+  form.append("entry.comment", text);
+
+  fetch(FORM_ACTION_URL, {
+    method: "POST",
+    mode: "no-cors",
+    body: form
   });
+
+  alert("Enviado!");
+}
+
+/* ===== INICIAL ===== */
+fetch("posts.json?cache=" + Date.now())
+  .then(r => r.json())
+  .then(async data => {
+    await loadComments();
+    render(data);
+  });
+
 </script>
 
 </body>
