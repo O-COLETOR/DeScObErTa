@@ -50,7 +50,7 @@
     .post {
       position: relative;
       width: 100%;
-      height: auto;
+      height: 100%;
       background: #161622;
       border-radius: 0;
       padding: 10px;
@@ -66,35 +66,6 @@
       font-weight: bold;
       font-size: 18px;
       flex: 0 0 auto;
-    }
-
-    .post img.main-image {
-      width: 40%;
-      display: block;
-      margin: 0 auto 15px auto;
-      border-radius: 6px;
-      max-width: 100%;
-      height: auto;
-      flex: 0 0 auto;
-    }
-
-    .text-shell {
-      position: relative;
-      flex: 1 1 auto;
-      min-height: 0;
-      max-height: calc(100svh - 240px);
-      overflow-y: auto;
-      overflow-x: hidden;
-      padding-right: 2px;
-    }
-
-    .text {
-      text-align: justify;
-      line-height: 1.6;
-      font-family: "Courier New", monospace;
-      font-size: 14px;
-      white-space: pre-line;
-      overflow-wrap: anywhere;
     }
 
     .tag {
@@ -141,6 +112,39 @@
 
     .comment-btn:hover {
       opacity: 1;
+    }
+
+    .media-shell {
+      position: relative;
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding-right: 2px;
+      box-sizing: border-box;
+    }
+
+    .post img.main-image {
+      width: 40%;
+      display: block;
+      margin: 0 auto 15px auto;
+      border-radius: 6px;
+      max-width: 100%;
+      height: auto;
+    }
+
+    .text-shell {
+      position: relative;
+      overflow: visible;
+    }
+
+    .text {
+      text-align: justify;
+      line-height: 1.6;
+      font-family: "Courier New", monospace;
+      font-size: 14px;
+      white-space: pre-line;
+      overflow-wrap: anywhere;
     }
 
     .comment-box {
@@ -295,8 +299,8 @@
         height: 42px;
       }
 
-      .text-shell {
-        max-height: calc(100svh - 220px);
+      .media-shell {
+        overflow-y: auto;
       }
     }
   </style>
@@ -614,21 +618,26 @@
         html += `<div class="title">${escapeHtml(post.title)}</div>`;
       }
 
+      html += `
+          <div class="media-shell">
+      `;
+
       if (post.image && String(post.image).trim() !== "") {
         html += `<img class="main-image" src="${escapeHtml(post.image)}" alt="">`;
       }
 
       html += `
-          <div class="text-shell">
-            <div class="text">${escapeHtml(post.text || "")}</div>
+            <div class="text-shell">
+              <div class="text">${escapeHtml(post.text || "")}</div>
 
-            <div class="comment-box" id="cbox-${postId}" hidden>
-              <div class="comment-list" id="comments-${postId}"></div>
+              <div class="comment-box" id="cbox-${postId}" hidden>
+                <div class="comment-list" id="comments-${postId}"></div>
 
-              <div class="comment-form">
-                <input id="name-${postId}" value="${storedName}" placeholder="Nome de acesso">
-                <textarea id="text-${postId}" placeholder="Comentário"></textarea>
-                <button type="button" data-action="send-comment" data-post-id="${postId}">Enviar</button>
+                <div class="comment-form">
+                  <input id="name-${postId}" value="${storedName}" placeholder="Nome de acesso">
+                  <textarea id="text-${postId}" placeholder="Comentário"></textarea>
+                  <button type="button" data-action="send-comment" data-post-id="${postId}">Enviar</button>
+                </div>
               </div>
             </div>
           </div>
@@ -672,8 +681,35 @@
       return Boolean(target.closest(".comment-box"));
     }
 
+    function getScrollableContainer(target) {
+      if (!(target instanceof Element)) return null;
+      return target.closest(".comment-list") || target.closest(".media-shell");
+    }
+
+    function canScrollDown(el) {
+      return el.scrollTop + el.clientHeight < el.scrollHeight - 1;
+    }
+
+    function canScrollUp(el) {
+      return el.scrollTop > 1;
+    }
+
     document.addEventListener("wheel", (event) => {
-      if (isInsideCommentBox(event.target)) return;
+      if (isInsideCommentBox(event.target)) {
+        const commentList = event.target.closest(".comment-list");
+        if (commentList) {
+          if (event.deltaY > 0 && canScrollDown(commentList)) return;
+          if (event.deltaY < 0 && canScrollUp(commentList)) return;
+        }
+      }
+
+      const scroller = getScrollableContainer(event.target);
+
+      if (scroller) {
+        if (event.deltaY > 0 && canScrollDown(scroller)) return;
+        if (event.deltaY < 0 && canScrollUp(scroller)) return;
+      }
+
       if (event.deltaY > 0) {
         event.preventDefault();
         advanceToNextPost();
@@ -705,6 +741,12 @@
       const deltaY = touch.clientY - touchStartY;
 
       if (deltaY < -60) {
+        const scroller = getScrollableContainer(touchStartTarget);
+
+        if (scroller && canScrollDown(scroller)) {
+          return;
+        }
+
         advanceToNextPost();
       }
     }, { passive: true });
