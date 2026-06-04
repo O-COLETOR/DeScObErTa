@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Painel Secreto</title>
+
+<style>
+body {
+  font-family: Arial;
+  background:#0b0b0f;
+  color:white;
+  padding:20px;
+}
+
+input, textarea {
+  width:100%;
+  margin:5px 0;
+  padding:10px;
+  background:#161622;
+  color:white;
+  border:none;
+}
+
+button {
+  width:100%;
+  padding:10px;
+  margin-top:10px;
+}
+</style>
+</head>
+
+<body>
+
+<h2>Painel Secreto</h2>
+
+<input id="title" placeholder="Título">
+<input id="image" placeholder="Imagem (URL)">
+<textarea id="text" placeholder="Texto"></textarea>
+
+<button onclick="postar()">Postar</button>
+
+<script>
+function getPosts() {
+  return JSON.parse(localStorage.getItem("posts") || "[]");
+}
+
+function postar() {
+  const posts = getPosts();
+
+  posts.push({
+    title: document.getElementById("title").value,
+    image: document.getElementById("image").value,
+    text: document.getElementById("text").value
+  });
+
+  localStorage.setItem("posts", JSON.stringify(posts));
+
+  alert("Post criado!");
+}
+</script>
+
+</body>
+</html>
