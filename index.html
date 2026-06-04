@@ -12,10 +12,7 @@
       background: #0b0b0f;
       color: #eaeaea;
       font-family: Arial, sans-serif;
-      overflow-y: auto;
-      scroll-snap-type: y mandatory;
-      scroll-behavior: smooth;
-      overscroll-behavior-y: contain;
+      overflow: hidden;
     }
 
     body {
@@ -26,28 +23,30 @@
       text-align: center;
       padding: 20px;
       margin: 0;
+      flex: 0 0 auto;
     }
 
-    .feed {
-      max-width: 600px;
-      margin: 0 auto;
-      padding: 0;
+    #viewer {
+      width: 100%;
+      height: calc(100vh - 70px);
+      height: calc(100svh - 70px);
       box-sizing: border-box;
+      padding: 20px 16px 16px 16px;
+      display: flex;
+      align-items: stretch;
+      justify-content: center;
       overflow: visible;
     }
 
     .post {
       position: relative;
+      width: min(600px, 100%);
+      height: 100%;
       background: #161622;
-      margin: 0;
       border-radius: 0;
       padding: 10px;
       box-sizing: border-box;
       overflow: visible;
-      min-height: 100vh;
-      min-height: 100svh;
-      scroll-snap-align: start;
-      scroll-snap-stop: always;
       display: flex;
       flex-direction: column;
     }
@@ -60,7 +59,7 @@
       flex: 0 0 auto;
     }
 
-    .post img {
+    .post img.main-image {
       width: 40%;
       display: block;
       margin: 0 auto 15px auto;
@@ -74,8 +73,7 @@
       position: relative;
       flex: 1 1 auto;
       min-height: 0;
-      overflow-y: auto;
-      overflow-x: hidden;
+      overflow: visible;
     }
 
     .text {
@@ -85,12 +83,13 @@
       font-size: 14px;
       white-space: pre-line;
       padding-right: 2px;
+      overflow-wrap: anywhere;
     }
 
     .tag {
       position: absolute;
-      top: -12px;
-      right: -12px;
+      top: -14px;
+      right: -14px;
       background: #2a2a3f;
       color: #fff;
       padding: 5px 10px;
@@ -102,10 +101,10 @@
 
     .comment-btn {
       position: absolute;
-      top: 28px;
-      right: -12px;
-      width: 32px;
-      height: 32px;
+      top: 34px;
+      right: -14px;
+      width: 42px;
+      height: 42px;
       padding: 0;
       border: none;
       background: transparent;
@@ -115,12 +114,12 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      opacity: 0.9;
+      opacity: 0.95;
     }
 
     .comment-btn img {
-      width: 30px;
-      height: 30px;
+      width: 42px;
+      height: 42px;
       display: block;
       object-fit: contain;
       margin: 0;
@@ -218,15 +217,28 @@
       filter: brightness(1.1);
     }
 
+    .hint {
+      position: fixed;
+      left: 50%;
+      bottom: 10px;
+      transform: translateX(-50%);
+      font-size: 11px;
+      opacity: 0.55;
+      pointer-events: none;
+      z-index: 5;
+      white-space: nowrap;
+    }
+
     @media (max-width: 600px) {
       h1 {
-        padding: 16px 12px;
+        padding: 16px 12px 10px 12px;
         font-size: 20px;
       }
 
-      .feed {
-        width: 100%;
-        padding: 0;
+      #viewer {
+        height: calc(100vh - 58px);
+        height: calc(100svh - 58px);
+        padding: 16px 12px 12px 12px;
       }
 
       .post {
@@ -239,7 +251,7 @@
         margin: 8px 0 12px 0;
       }
 
-      .post img {
+      .post img.main-image {
         width: 85%;
         margin: 0 auto 12px auto;
       }
@@ -251,26 +263,21 @@
 
       .tag {
         font-size: 11px;
-        top: -8px;
-        right: -6px;
+        top: -12px;
+        right: -12px;
         padding: 4px 8px;
       }
 
       .comment-btn {
-        top: 26px;
-        right: -6px;
-        width: 28px;
-        height: 28px;
+        top: 30px;
+        right: -12px;
+        width: 42px;
+        height: 42px;
       }
 
       .comment-btn img {
-        width: 26px;
-        height: 26px;
-      }
-
-      .comment-list {
-        flex: 1 1 auto;
-        min-height: 0;
+        width: 42px;
+        height: 42px;
       }
     }
   </style>
@@ -278,12 +285,13 @@
 
 <body>
   <h1>Universal Local Anomalous Wiki</h1>
-  <div class="feed" id="feed"></div>
+  <div id="viewer"></div>
+  <div class="hint">role para baixo / seta para baixo para o próximo post</div>
 
   <script>
     "use strict";
 
-    const feed = document.getElementById("feed");
+    const viewer = document.getElementById("viewer");
 
     const POSTS_URL = "posts.json";
     const COMMENTS_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRTN5WD-EWF91lN2HfSOa1vxvw1nSr9BXMcEnnw9Ss-iZbGnA5CZ9bspP2hxOVXsJ8Y3qySnEE0froN/pub?gid=1547364444&single=true&output=csv";
@@ -295,22 +303,14 @@
 
     const COMMENT_NAME_KEY = "ula_comment_name";
     const COMMENTS_CACHE_TTL_MS = 15000;
-
-    const INITIAL_BATCH_SIZE = 2;
-    const LOAD_MORE_BATCH_SIZE = 1;
     const RECENT_POST_LIMIT = 10;
-
-    const feedSentinel = document.createElement("div");
-    feedSentinel.id = "feed-sentinel";
-    feedSentinel.style.height = "1px";
-    feedSentinel.style.width = "100%";
 
     let commentsByPost = {};
     let commentsLoadedAt = 0;
     let postsData = [];
+    let currentPostIndex = -1;
     let recentPostIndices = [];
-    let feedObserver = null;
-    let loadingMore = false;
+    let navigationLocked = false;
 
     function escapeHtml(value) {
       return String(value ?? "")
@@ -453,23 +453,9 @@
 
         const header = rows[0].map(v => String(v || "").trim().toLowerCase());
 
-        const nameIdx = findIndexByPatterns(
-          header,
-          [/nome de acesso/, /^nome$/, /nome/],
-          1
-        );
-
-        const commentIdx = findIndexByPatterns(
-          header,
-          [/comentário/, /comentario/, /^texto$/, /coment/],
-          2
-        );
-
-        const postIdx = findIndexByPatterns(
-          header,
-          [/post[_ ]?id/, /post id/, /id do post/],
-          3
-        );
+        const nameIdx = findIndexByPatterns(header, [/nome de acesso/, /^nome$/, /nome/], 1);
+        const commentIdx = findIndexByPatterns(header, [/comentário/, /comentario/, /^texto$/, /coment/], 2);
+        const postIdx = findIndexByPatterns(header, [/post[_ ]?id/, /post id/, /id do post/], 3);
 
         for (const row of rows.slice(1)) {
           const name = String(row[nameIdx] || "").trim();
@@ -582,8 +568,9 @@
     }
 
     function createPostElement(post, index) {
-      const div = document.createElement("div");
+      const div = document.createElement("section");
       div.className = "post";
+      div.dataset.postId = `post_${index}`;
 
       const postId = `post_${index}`;
       const storedName = escapeHtml(localStorage.getItem(COMMENT_NAME_KEY) || "");
@@ -596,7 +583,7 @@
 
       html += `
         <button class="comment-btn" type="button" aria-label="Abrir comentários" data-action="toggle-comments" data-post-id="${postId}">
-          <img src="https://pbs.twimg.com/profile_images/2018733234251612160/pLCie90k_400x400.jpg" alt="">
+          <img src="https://png.pngtree.com/png-clipart/20240720/original/pngtree-comment-icon-png-image_15596549.png" alt="">
         </button>
       `;
 
@@ -605,7 +592,7 @@
       }
 
       if (post.image && String(post.image).trim() !== "") {
-        html += `<img src="${escapeHtml(post.image)}" alt="">`;
+        html += `<img class="main-image" src="${escapeHtml(post.image)}" alt="">`;
       }
 
       html += `
@@ -628,55 +615,75 @@
       return div;
     }
 
-    function appendNextPost() {
-      const index = pickNextPostIndex();
-      if (index < 0) return false;
+    function showPost(index) {
+      if (index < 0 || index >= postsData.length) return;
 
-      const element = createPostElement(postsData[index], index);
-      feed.insertBefore(element, feedSentinel);
-      renderComments(`post_${index}`);
-      return true;
+      currentPostIndex = index;
+      viewer.replaceChildren(createPostElement(postsData[index], index));
+      loadComments(false).then(() => renderComments(`post_${index}`));
+      window.scrollTo(0, 0);
     }
 
-    function appendBatch(count) {
-      let appended = 0;
-      for (let i = 0; i < count; i++) {
-        if (!appendNextPost()) break;
-        appended++;
+    function advanceToNextPost() {
+      if (navigationLocked) return;
+      navigationLocked = true;
+
+      setTimeout(() => {
+        navigationLocked = false;
+      }, 550);
+
+      const nextIndex = pickNextPostIndex();
+      if (nextIndex >= 0) {
+        showPost(nextIndex);
       }
-      return appended;
     }
 
-    function setupInfiniteLoading() {
-      if (feedObserver) {
-        feedObserver.disconnect();
+    function isEditableTarget(target) {
+      if (!(target instanceof Element)) return false;
+      return Boolean(target.closest("input, textarea, select, [contenteditable='true']"));
+    }
+
+    function isInsideCommentBox(target) {
+      if (!(target instanceof Element)) return false;
+      return Boolean(target.closest(".comment-box"));
+    }
+
+    document.addEventListener("wheel", (event) => {
+      if (isInsideCommentBox(event.target)) return;
+      if (event.deltaY > 0) {
+        event.preventDefault();
+        advanceToNextPost();
       }
+    }, { passive: false });
 
-      feedObserver = new IntersectionObserver((entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting && !loadingMore) {
-            loadingMore = true;
-            setTimeout(() => {
-              appendBatch(LOAD_MORE_BATCH_SIZE);
-              loadingMore = false;
-            }, 0);
-          }
-        }
-      }, {
-        root: null,
-        rootMargin: "700px 0px 700px 0px",
-        threshold: 0.01
-      });
+    document.addEventListener("keydown", (event) => {
+      if (isEditableTarget(document.activeElement)) return;
 
-      feedObserver.observe(feedSentinel);
-    }
+      if (event.key === "ArrowDown" || event.key === "PageDown" || event.key === " " || event.key === "Enter") {
+        event.preventDefault();
+        advanceToNextPost();
+      }
+    });
 
-    function renderInitialFeed() {
-      feed.replaceChildren();
-      feed.appendChild(feedSentinel);
-      appendBatch(INITIAL_BATCH_SIZE);
-      setupInfiniteLoading();
-    }
+    let touchStartY = 0;
+    let touchStartTarget = null;
+
+    document.addEventListener("touchstart", (event) => {
+      const touch = event.touches[0];
+      touchStartY = touch.clientY;
+      touchStartTarget = event.target instanceof Element ? event.target : null;
+    }, { passive: true });
+
+    document.addEventListener("touchend", (event) => {
+      if (isInsideCommentBox(touchStartTarget) || isEditableTarget(touchStartTarget)) return;
+
+      const touch = event.changedTouches[0];
+      const deltaY = touch.clientY - touchStartY;
+
+      if (deltaY < -60) {
+        advanceToNextPost();
+      }
+    }, { passive: true });
 
     feed.addEventListener("click", (event) => {
       const actionEl = event.target.closest("[data-action]");
@@ -735,10 +742,16 @@
 
         const [posts] = await Promise.all([postsPromise, commentsPromise]);
         postsData = Array.isArray(posts) ? posts : [];
-        renderInitialFeed();
+
+        if (!postsData.length) {
+          viewer.innerHTML = "<p>Sem posts no momento.</p>";
+          return;
+        }
+
+        showPost(pickNextPostIndex());
       } catch (err) {
         console.error(err);
-        feed.innerHTML = "<p>Erro ao carregar posts.json</p>";
+        viewer.innerHTML = "<p>Erro ao carregar posts.json</p>";
       }
     }
 
