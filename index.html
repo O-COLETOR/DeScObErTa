@@ -72,6 +72,7 @@
       z-index: 10;
     }
 
+    /* TREMORES (ORIGINAL) */
     .tremor {
       animation: tremor 0.08s infinite;
     }
@@ -135,6 +136,12 @@ function shuffle(array) {
   return array.sort(() => Math.random() - 0.5);
 }
 
+/* ENTIDADE */
+function shouldShowEntity() {
+  return Math.random() < 0.22;
+}
+
+/* TREMORES ORIGINAL */
 function pickUniqueIndices(count, max) {
   const indices = Array.from({ length: max }, (_, i) => i);
   shuffle(indices);
@@ -144,15 +151,16 @@ function pickUniqueIndices(count, max) {
 function getTremorCount(totalPosts) {
   const r = Math.random();
 
-  if (r < 0.40) return Math.min(1, totalPosts);      // 40% -> 1 post
-  if (r < 0.60) return Math.min(2, totalPosts);      // 20% -> 2 posts
-  if (r < 0.65) return Math.min(4, totalPosts);      // 5%  -> 4 posts
-  if (r < 0.655) return totalPosts;                  // 0.5% -> todos os posts
-  return 0;                                          // resto -> nenhum
+  if (r < 0.40) return Math.min(1, totalPosts);
+  if (r < 0.60) return Math.min(2, totalPosts);
+  if (r < 0.65) return Math.min(4, totalPosts);
+  if (r < 0.655) return totalPosts;
+  return 0;
 }
 
 function render(posts) {
   const shuffled = shuffle([...posts]);
+
   const tremorCount = getTremorCount(shuffled.length);
   const tremorIndices = pickUniqueIndices(tremorCount, shuffled.length);
 
@@ -187,7 +195,36 @@ function render(posts) {
 
 fetch("posts.json?cache=" + Date.now())
   .then(res => res.json())
-  .then(data => render(data))
+  .then(data => {
+    render(data);
+
+    if (shouldShowEntity()) {
+      const overlay = document.createElement("div");
+      overlay.className = "post";
+      overlay.style.position = "fixed";
+      overlay.style.top = "50%";
+      overlay.style.left = "50%";
+      overlay.style.transform = "translate(-50%, -50%)";
+      overlay.style.zIndex = "9999";
+      overlay.style.width = "80%";
+      overlay.style.maxWidth = "400px";
+      overlay.style.background = "#000";
+      overlay.style.border = "2px solid #444";
+      overlay.style.textAlign = "center";
+      overlay.style.padding = "15px";
+
+      overlay.innerHTML = `
+        <div class="title">TITULO</div>
+        <div class="text">eu to te vendo!</div>
+      `;
+
+      document.body.appendChild(overlay);
+
+      setTimeout(() => {
+        overlay.remove();
+      }, 40000);
+    }
+  })
   .catch(err => {
     console.error(err);
     feed.innerHTML = "<p>Erro ao carregar posts.json</p>";
