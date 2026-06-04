@@ -2,6 +2,7 @@
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Universal Local Anomalous Wiki</title>
 
   <style>
@@ -113,13 +114,13 @@ function render(posts) {
   });
 }
 
-// 🔥 AGORA LÊ DO GITHUB (posts.json)
-fetch("posts.json")
+// 🔥 CARREGA POSTS DO GITHUB (SEM CACHE)
+fetch("posts.json?cache=" + Date.now())
   .then(res => res.json())
   .then(data => render(data))
   .catch(err => {
-    feed.innerHTML = "<p>Erro ao carregar posts.json</p>";
     console.error(err);
+    feed.innerHTML = "<p>Erro ao carregar posts.json</p>";
   });
 </script>
 
