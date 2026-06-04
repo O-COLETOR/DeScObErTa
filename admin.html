@@ -25,6 +25,20 @@ button {
   width:100%;
   padding:10px;
   margin-top:10px;
+  cursor:pointer;
+}
+
+.post-box {
+  background:#161622;
+  padding:10px;
+  margin:10px 0;
+  border-radius:8px;
+}
+
+.small-btn {
+  width:49%;
+  display:inline-block;
+  margin-top:5px;
 }
 </style>
 </head>
@@ -33,30 +47,95 @@ button {
 
 <h2>Painel Secreto</h2>
 
+<h3>Criar / Editar post</h3>
+
 <input id="title" placeholder="Título">
 <input id="image" placeholder="Imagem (URL)">
 <textarea id="text" placeholder="Texto"></textarea>
 
-<button onclick="postar()">Postar</button>
+<button onclick="salvarPost()">Salvar post</button>
+
+<hr>
+
+<h3>Posts existentes</h3>
+<div id="lista"></div>
 
 <script>
+let editIndex = null;
+
 function getPosts() {
   return JSON.parse(localStorage.getItem("posts") || "[]");
 }
 
-function postar() {
-  const posts = getPosts();
+function savePosts(posts) {
+  localStorage.setItem("posts", JSON.stringify(posts));
+}
 
-  posts.push({
+function limparForm() {
+  document.getElementById("title").value = "";
+  document.getElementById("image").value = "";
+  document.getElementById("text").value = "";
+  editIndex = null;
+}
+
+function salvarPost() {
+  let posts = getPosts();
+
+  const newPost = {
     title: document.getElementById("title").value,
     image: document.getElementById("image").value,
     text: document.getElementById("text").value
-  });
+  };
 
-  localStorage.setItem("posts", JSON.stringify(posts));
+  if (editIndex === null) {
+    posts.push(newPost);
+  } else {
+    posts[editIndex] = newPost;
+  }
 
-  alert("Post criado!");
+  savePosts(posts);
+  limparForm();
+  render();
 }
+
+function editar(i) {
+  let posts = getPosts();
+  let p = posts[i];
+
+  document.getElementById("title").value = p.title;
+  document.getElementById("image").value = p.image;
+  document.getElementById("text").value = p.text;
+
+  editIndex = i;
+}
+
+function apagar(i) {
+  let posts = getPosts();
+  posts.splice(i, 1);
+  savePosts(posts);
+  render();
+}
+
+function render() {
+  let posts = getPosts();
+  const lista = document.getElementById("lista");
+  lista.innerHTML = "";
+
+  posts.forEach((p, i) => {
+    const div = document.createElement("div");
+    div.className = "post-box";
+
+    div.innerHTML = `
+      <b>${p.title}</b><br><br>
+      <button class="small-btn" onclick="editar(${i})">Editar</button>
+      <button class="small-btn" onclick="apagar(${i})">Apagar</button>
+    `;
+
+    lista.appendChild(div);
+  });
+}
+
+render();
 </script>
 
 </body>
