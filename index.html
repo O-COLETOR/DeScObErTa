@@ -33,7 +33,7 @@
       box-sizing: border-box;
       padding: 20px 16px 16px 16px;
       display: flex;
-      align-items: stretch;
+      align-items: center;
       justify-content: center;
       overflow: visible;
     }
@@ -41,7 +41,6 @@
     .post-wrap {
       position: relative;
       width: min(600px, 100%);
-      height: 100%;
       padding-right: 58px;
       box-sizing: border-box;
       overflow: visible;
@@ -50,7 +49,7 @@
     .post {
       position: relative;
       width: 100%;
-      height: 100%;
+      height: auto;
       background: #161622;
       border-radius: 0;
       padding: 10px;
@@ -114,10 +113,10 @@
       opacity: 1;
     }
 
-    .media-shell {
+    .body-shell {
       position: relative;
-      flex: 1 1 auto;
-      min-height: 0;
+      flex: 0 0 auto;
+      max-height: calc(100svh - 210px);
       overflow-y: auto;
       overflow-x: hidden;
       padding-right: 2px;
@@ -299,8 +298,8 @@
         height: 42px;
       }
 
-      .media-shell {
-        overflow-y: auto;
+      .body-shell {
+        max-height: calc(100svh - 180px);
       }
     }
   </style>
@@ -334,6 +333,7 @@
     let currentPostIndex = -1;
     let recentPostIndices = [];
     let navigationLocked = false;
+    let advanceArmed = false;
 
     function escapeHtml(value) {
       return String(value ?? "")
@@ -346,14 +346,6 @@
 
     function cacheBustUrl(url) {
       return url + (url.includes("?") ? "&" : "?") + "cb=" + Date.now();
-    }
-
-    function shuffle(array) {
-      for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
-      }
-      return array;
     }
 
     function normalizePostId(value) {
@@ -610,38 +602,34 @@
         </button>
       `;
 
-      html += `
-        <article class="post">
-      `;
+      html += `<article class="post">`;
 
       if (post.title && String(post.title).trim() !== "") {
         html += `<div class="title">${escapeHtml(post.title)}</div>`;
       }
 
-      html += `
-          <div class="media-shell">
-      `;
+      html += `<div class="body-shell">`;
 
       if (post.image && String(post.image).trim() !== "") {
         html += `<img class="main-image" src="${escapeHtml(post.image)}" alt="">`;
       }
 
       html += `
-            <div class="text-shell">
-              <div class="text">${escapeHtml(post.text || "")}</div>
+          <div class="text-shell">
+            <div class="text">${escapeHtml(post.text || "")}</div>
 
-              <div class="comment-box" id="cbox-${postId}" hidden>
-                <div class="comment-list" id="comments-${postId}"></div>
+            <div class="comment-box" id="cbox-${postId}" hidden>
+              <div class="comment-list" id="comments-${postId}"></div>
 
-                <div class="comment-form">
-                  <input id="name-${postId}" value="${storedName}" placeholder="Nome de acesso">
-                  <textarea id="text-${postId}" placeholder="Comentário"></textarea>
-                  <button type="button" data-action="send-comment" data-post-id="${postId}">Enviar</button>
-                </div>
+              <div class="comment-form">
+                <input id="name-${postId}" value="${storedName}" placeholder="Nome de acesso">
+                <textarea id="text-${postId}" placeholder="Comentário"></textarea>
+                <button type="button" data-action="send-comment" data-post-id="${postId}">Enviar</button>
               </div>
             </div>
           </div>
-        </article>
+        </div>
+      </article>
       `;
 
       wrap.innerHTML = html;
@@ -655,6 +643,7 @@
       viewer.replaceChildren(createPostElement(postsData[index], index));
       loadComments(false).then(() => renderComments(`post_${index}`));
       window.scrollTo(0, 0);
+      advanceArmed = false;
     }
 
     function advanceToNextPost() {
@@ -683,7 +672,7 @@
 
     function getScrollableContainer(target) {
       if (!(target instanceof Element)) return null;
-      return target.closest(".comment-list") || target.closest(".media-shell");
+      return target.closest(".comment-list") || target.closest(".body-shell");
     }
 
     function canScrollDown(el) {
@@ -695,24 +684,31 @@
     }
 
     document.addEventListener("wheel", (event) => {
-      if (isInsideCommentBox(event.target)) {
-        const commentList = event.target.closest(".comment-list");
-        if (commentList) {
-          if (event.deltaY > 0 && canScrollDown(commentList)) return;
-          if (event.deltaY < 0 && canScrollUp(commentList)) return;
-        }
-      }
-
       const scroller = getScrollableContainer(event.target);
 
       if (scroller) {
-        if (event.deltaY > 0 && canScrollDown(scroller)) return;
-        if (event.deltaY < 0 && canScrollUp(scroller)) return;
+        if (event.deltaY > 0 && canScrollDown(scroller)) {
+          advanceArmed = false;
+          return;
+        }
+
+        if (event.deltaY < 0 && canScrollUp(scroller)) {
+          advanceArmed = false;
+          return;
+        }
       }
 
       if (event.deltaY > 0) {
         event.preventDefault();
-        advanceToNextPost();
+
+        if (advanceArmed) {
+          advanceArmed = false;
+          advanceToNextPost();
+        } else {
+          advanceArmed = true;
+        }
+      } else if (event.deltaY < 0) {
+        advanceArmed = false;
       }
     }, { passive: false });
 
@@ -739,15 +735,22 @@
 
       const touch = event.changedTouches[0];
       const deltaY = touch.clientY - touchStartY;
+      const scroller = getScrollableContainer(touchStartTarget);
 
       if (deltaY < -60) {
-        const scroller = getScrollableContainer(touchStartTarget);
-
         if (scroller && canScrollDown(scroller)) {
+          advanceArmed = false;
           return;
         }
 
-        advanceToNextPost();
+        if (advanceArmed) {
+          advanceArmed = false;
+          advanceToNextPost();
+        } else {
+          advanceArmed = true;
+        }
+      } else if (deltaY > 60) {
+        advanceArmed = false;
       }
     }, { passive: true });
 
