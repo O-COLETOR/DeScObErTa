@@ -6,22 +6,32 @@
   <title>Universal Local Anomalous Wiki</title>
 
   <style>
-    body {
+    html, body {
       margin: 0;
+      min-height: 100%;
       background: #0b0b0f;
       color: #eaeaea;
       font-family: Arial, sans-serif;
+      overflow-y: auto;
+      scroll-snap-type: y mandatory;
+      scroll-behavior: smooth;
+      overscroll-behavior-y: contain;
+    }
+
+    body {
+      margin: 0;
     }
 
     h1 {
       text-align: center;
       padding: 20px;
+      margin: 0;
     }
 
     .feed {
       max-width: 600px;
-      margin: auto;
-      padding: 10px;
+      margin: 0 auto;
+      padding: 0;
       box-sizing: border-box;
       overflow: visible;
     }
@@ -29,11 +39,17 @@
     .post {
       position: relative;
       background: #161622;
-      margin: 20px 0;
+      margin: 0;
       border-radius: 0;
       padding: 10px;
       box-sizing: border-box;
       overflow: visible;
+      min-height: 100vh;
+      min-height: 100svh;
+      scroll-snap-align: start;
+      scroll-snap-stop: always;
+      display: flex;
+      flex-direction: column;
     }
 
     .title {
@@ -41,6 +57,7 @@
       margin: 10px 0 15px 0;
       font-weight: bold;
       font-size: 18px;
+      flex: 0 0 auto;
     }
 
     .post img {
@@ -50,11 +67,15 @@
       border-radius: 6px;
       max-width: 100%;
       height: auto;
+      flex: 0 0 auto;
     }
 
     .text-shell {
       position: relative;
-      overflow: visible;
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
     }
 
     .text {
@@ -63,6 +84,7 @@
       font-family: "Courier New", monospace;
       font-size: 14px;
       white-space: pre-line;
+      padding-right: 2px;
     }
 
     .tag {
@@ -116,6 +138,7 @@
       top: 0;
       left: 0;
       right: 0;
+      bottom: 0;
       z-index: 20;
       background: #0f0f18;
       padding: 10px;
@@ -134,8 +157,10 @@
     }
 
     .comment-list {
-      max-height: 45vh;
+      flex: 1 1 auto;
+      min-height: 0;
       overflow-y: auto;
+      overflow-x: hidden;
       margin-bottom: 0;
       padding-right: 2px;
     }
@@ -153,6 +178,10 @@
       font-size: 13px;
       opacity: 0.7;
       margin-bottom: 8px;
+    }
+
+    .comment-form {
+      flex: 0 0 auto;
     }
 
     .comment-form input,
@@ -190,13 +219,17 @@
     }
 
     @media (max-width: 600px) {
+      h1 {
+        padding: 16px 12px;
+        font-size: 20px;
+      }
+
       .feed {
         width: 100%;
-        padding: 14px 12px;
+        padding: 0;
       }
 
       .post {
-        margin: 12px 0;
         padding: 10px;
         border-radius: 0;
       }
@@ -236,7 +269,8 @@
       }
 
       .comment-list {
-        max-height: 50vh;
+        flex: 1 1 auto;
+        min-height: 0;
       }
     }
   </style>
@@ -262,8 +296,8 @@
     const COMMENT_NAME_KEY = "ula_comment_name";
     const COMMENTS_CACHE_TTL_MS = 15000;
 
-    const INITIAL_BATCH_SIZE = 6;
-    const LOAD_MORE_BATCH_SIZE = 2;
+    const INITIAL_BATCH_SIZE = 2;
+    const LOAD_MORE_BATCH_SIZE = 1;
     const RECENT_POST_LIMIT = 10;
 
     const feedSentinel = document.createElement("div");
