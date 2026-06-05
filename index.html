@@ -9,8 +9,22 @@
     html, body {
       margin: 0;
       min-height: 100%;
-      background:
-      linear-gradient(#0b0b0f,#08080c);
+      background-color: #0b0b0f;
+      background-image:
+        repeating-linear-gradient(
+          0deg,
+          rgba(255,255,255,0.015) 0px,
+          rgba(255,255,255,0.015) 1px,
+          transparent 1px,
+          transparent 4px
+        ),
+        repeating-linear-gradient(
+          90deg,
+          rgba(255,255,255,0.01) 0px,
+          rgba(255,255,255,0.01) 1px,
+          transparent 1px,
+          transparent 4px
+        );
       color: #eaeaea;
       font-family: Arial, sans-serif;
       overflow: hidden;
@@ -63,7 +77,16 @@
       position: relative;
       width: 100%;
       height: auto;
-      background: #161622;
+      background:
+        repeating-linear-gradient(
+          0deg,
+          rgba(255,255,255,0.015) 0px,
+          rgba(255,255,255,0.015) 1px,
+          transparent 1px,
+          transparent 4px
+        ),
+        #161622;
+      border: 1px solid #2f2f44;
       border-radius: 0;
       padding: 10px;
       box-sizing: border-box;
@@ -380,7 +403,7 @@
       3: 10,
       4: 4,
       5: 2,
-      6: 0,5
+      6: 0.5
     };
 
     let commentsByPost = {};
@@ -487,10 +510,8 @@
     function getPostLevel(post) {
       const raw = String(post?.nivel ?? "").trim();
       const level = Number.parseInt(raw, 10);
-
       if (!Number.isInteger(level)) return null;
-      if (level < 1 || level > 5) return null;
-
+      if (level < 1 || level > 6) return null;
       return level;
     }
 
