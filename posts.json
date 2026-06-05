@@ -99,6 +99,7 @@
  "tag": "OBJETO",
  "image": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSpEn0qZihPrq56Ppfec8IQX05BGUf4nh2eNQ&s",
  "title": "Arvore",
+ "nivel": "3",
  "text": "Uma árvore é uma planta de grande porte, caracterizada por um caule lenhoso (o tronco) que se ramifica a certa altura do solo. Ela atua como um ecossistema completo e é essencial para o equilíbrio ecológico.Principais Partes e FunçõesRaízes: Fixam a planta no solo e absorvem água e nutrientes.Tronco (Caule): Sustenta a copa e transporta a seiva pelo organismo.Folhas: Responsáveis pela fotossíntese, processo que absorve gás carbônico e libera oxigênio.Flores e Frutos: Estratégias de reprodução da planta que também servem de alimento para a fauna."
 },
 {
@@ -111,6 +112,7 @@
  "tag": "entidade",
  "image": "https://i.pinimg.com/564x/41/b4/e1/41b4e1ec250c382fd648bc39679be87c.jpg",
  "title": "B3LA-f12",
+ "nivel": "1",
  "text": "B3LA-f2 é uma maquina humanoid com inteligência humana, sem identidade ou capacidade de sentir emoções humanas. B3LA é uma androide de carregamento do planeta marte setor-4 que acabou escapando de seu setor, atualmente em estado de deterioração extrema, e capacidade de distinguir ameaça alterada, B3LA ataca aleatoriamente qualquer coisa que se aproxime."
 },
 {
