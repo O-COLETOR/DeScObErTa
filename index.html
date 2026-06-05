@@ -178,7 +178,6 @@
       box-sizing: border-box;
     }
 
-    /* CORREÇÃO DAS BARRAS ESTRANHAS: Removido min-height rígido, agora se adapta ao formato da foto */
     .image-container {
       width: 40%;
       margin: 0 auto 15px auto;
@@ -396,17 +395,16 @@
     const COMMENT_NAME_KEY = "ula_comment_name";
     const COMMENTS_CACHE_TTL_MS = 15000;
 
-    const RECENT_POST_LIMIT = 10;
+    // Aumentado para 30 para conseguir rastrear com folga o bloqueio de 20 posts do Nível 6
+    const RECENT_POST_LIMIT = 30; 
     const RECENT_BLOCK_COUNT = 2;
-    const RECENT_WEIGHT_PENALTY = 0.2;
 
     const LEVEL_WEIGHTS = {
       1: 80,
       2: 75,
       3: 70,
       4: 60,
-      5: 40,
-      6: 1
+      5: 40
     };
 
     let commentsByPost = {};
@@ -503,7 +501,11 @@
     }
 
     function rememberPostIndex(index) {
-      if (recentPostIndices.includes(index)) return;
+      if (recentPostIndices.includes(index)) {
+        // Remove a ocorrência antiga para reordenar o histórico e mantê-lo recente no topo
+        const idx = recentPostIndices.indexOf(index);
+        recentPostIndices.splice(idx, 1);
+      }
       recentPostIndices.push(index);
       if (recentPostIndices.length > RECENT_POST_LIMIT) {
         recentPostIndices.shift();
@@ -526,18 +528,6 @@
       return 100;
     }
 
-    function getRecentFactor(index) {
-      const recentPos = recentPostIndices.lastIndexOf(index);
-      if (recentPos === -1) return 1;
-
-      const cutoff = Math.max(0, recentPostIndices.length - RECENT_BLOCK_COUNT);
-      if (recentPos >= cutoff) {
-        return 0;
-      }
-
-      return RECENT_WEIGHT_PENALTY;
-    }
-
     function pickWeightedIndex(indices) {
       if (!indices.length) return -1;
 
@@ -546,45 +536,64 @@
 
       for (const index of indices) {
         const baseWeight = Math.max(0, getPostWeight(postsData[index]));
-        const finalWeight = baseWeight * getRecentFactor(index);
-        totalWeight += finalWeight;
-        weights.push([index, finalWeight]);
-      }
-
-      const viable = weights.filter(([, weight]) => weight > 0);
-
-      if (!viable.length) {
-        return indices[Math.floor(Math.random() * indices.length)];
+        totalWeight += baseWeight;
+        weights.push([index, baseWeight]);
       }
 
       let roll = Math.random() * totalWeight;
 
       for (const [index, weight] of weights) {
-        if (weight <= 0) continue;
         roll -= weight;
         if (roll < 0) return index;
       }
 
-      return viable[viable.length - 1][0];
+      return indices[indices.length - 1];
     }
 
     function pickNextPostIndex() {
       const total = postsData.length;
       if (!total) return -1;
 
+      // --- LOGICA ISOLADA DO NÍVEL 6 ---
+      const level6Candidates = [];
+      for (let i = 0; i < total; i++) {
+        if (getPostLevel(postsData[i]) === 6) {
+          const lastSeenIdx = recentPostIndices.lastIndexOf(i);
+          // Calcula quantos posts se passaram desde que este post nível 6 específico apareceu
+          const postsPassed = lastSeenIdx === -1 ? Infinity : (recentPostIndices.length - 1 - lastSeenIdx);
+          
+          if (postsPassed >= 20 && i !== currentPostIndex) {
+            level6Candidates.push(i);
+          }
+        }
+      }
+
+      // Se houver anomalias nível 6 elegíveis, joga o dado de 0,4% de chance pura
+      if (level6Candidates.length > 0 && Math.random() < 0.004) {
+        return level6Candidates[Math.floor(Math.random() * level6Candidates.length)];
+      }
+
+      // --- LOGICA PADRÃO (NÍVEIS 1 A 5 E OUTROS) ---
       const blocked = new Set(recentPostIndices.slice(-RECENT_BLOCK_COUNT));
       let candidates = [];
 
       for (let i = 0; i < total; i++) {
-        if (!blocked.has(i) && i !== currentPostIndex) {
+        // Exclui nível 6 do fluxo normal de pesos, respeita o bloqueio dos últimos 2 e evita o atual
+        if (getPostLevel(postsData[i]) !== 6 && !blocked.has(i) && i !== currentPostIndex) {
           candidates.push(i);
         }
       }
 
+      // Fallback de emergência caso a lista de posts seja muito curta e tudo seja bloqueado
       if (!candidates.length) {
-        candidates = Array.from({ length: total }, (_, i) => i).filter(i => i !== currentPostIndex);
+        for (let i = 0; i < total; i++) {
+          if (getPostLevel(postsData[i]) !== 6 && i !== currentPostIndex) {
+            candidates.push(i);
+          }
+        }
       }
 
+      // Fallback final absoluto
       if (!candidates.length) return currentPostIndex;
 
       return pickWeightedIndex(candidates);
@@ -962,6 +971,7 @@
           return;
         }
 
+        // Inicializa com o primeiro post sorteado usando a nova lógica
         showPost(pickNextPostIndex());
       } catch (err) {
         console.error(err);
