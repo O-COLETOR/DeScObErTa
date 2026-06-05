@@ -775,9 +775,15 @@
           </div>
         `;
       } else if (post.image && String(post.image).trim() !== "") {
+        const isGif = /\.gif/i.test(post.image);
         html += `
           <div class="image-container">
-            <img class="main-media" src="${escapeHtml(post.image)}" decoding="async" alt="" onload="this.classList.add('loaded')">
+            <img class="main-media" 
+                 src="${escapeHtml(post.image)}" 
+                 ${isGif ? '' : 'decoding="async"'} 
+                 alt="" 
+                 onload="this.classList.add('loaded')"
+                 onerror="this.classList.add('loaded'); console.error('Erro ao processar mídia.');">
           </div>
         `;
       }
@@ -877,7 +883,7 @@
 
         if (advanceArmed) {
           advanceArmed = false;
-          value = advanceToNextPost();
+          advanceToNextPost();
         } else {
           advanceArmed = true;
         }
