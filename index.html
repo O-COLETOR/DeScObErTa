@@ -371,14 +371,22 @@
 
     const COMMENT_NAME_KEY = "ula_comment_name";
     const COMMENTS_CACHE_TTL_MS = 15000;
-    const RECENT_POST_LIMIT = 10; // Limite de 10 posts na esteira de bloqueio
+    const RECENT_POST_LIMIT = 10;
+
+    const LEVEL_WEIGHTS = {
+      1: 20,
+      2: 15,
+      3: 10,
+      4: 4,
+      5: 2
+    };
 
     let commentsByPost = {};
     let commentsLoadedAt = 0;
     let postsData = [];
     let currentPostIndex = -1;
-    let nextPostIndex = -1; 
-    let recentPostIndices = []; // Nossa esteira/fila FIFO de bloqueados
+    let nextPostIndex = -1;
+    let recentPostIndices = [];
     let navigationLocked = false;
     let advanceArmed = false;
 
@@ -466,16 +474,58 @@
       return idx >= 0 ? idx : fallback;
     }
 
-    // Gerencia a fila de bloqueio FIFO (o primeiro a entrar sai após 10 novos posts)
     function rememberPostIndex(index) {
-      if (recentPostIndices.includes(index)) return; 
+      if (recentPostIndices.includes(index)) return;
       recentPostIndices.push(index);
       if (recentPostIndices.length > RECENT_POST_LIMIT) {
-        recentPostIndices.shift(); // Remove o primeiro da lista, liberando sua chance aleatória novamente
+        recentPostIndices.shift();
       }
     }
 
-    // Sorteador blindado com a sua regra exata de bloqueio
+    function getPostLevel(post) {
+      const raw = String(post?.nivel ?? "").trim();
+      const level = Number.parseInt(raw, 10);
+
+      if (!Number.isInteger(level)) return null;
+      if (level < 1 || level > 5) return null;
+
+      return level;
+    }
+
+    function getPostWeight(post) {
+      const level = getPostLevel(post);
+      if (level && LEVEL_WEIGHTS[level] != null) {
+        return LEVEL_WEIGHTS[level];
+      }
+      return 1;
+    }
+
+    function pickWeightedIndex(indices) {
+      if (!indices.length) return -1;
+
+      let totalWeight = 0;
+      const weights = [];
+
+      for (const index of indices) {
+        const weight = Math.max(0, getPostWeight(postsData[index]));
+        totalWeight += weight;
+        weights.push([index, weight]);
+      }
+
+      if (totalWeight <= 0) {
+        return indices[Math.floor(Math.random() * indices.length)];
+      }
+
+      let roll = Math.random() * totalWeight;
+
+      for (const [index, weight] of weights) {
+        roll -= weight;
+        if (roll < 0) return index;
+      }
+
+      return weights[weights.length - 1][0];
+    }
+
     function pickNextPostIndex() {
       const total = postsData.length;
       if (!total) return -1;
@@ -489,14 +539,13 @@
         }
       }
 
-      // Se a quantidade de posts no json for menor ou igual a 10, reduz temporariamente a restrição
       if (!candidates.length) {
         candidates = Array.from({ length: total }, (_, i) => i).filter(i => i !== currentPostIndex);
       }
-      
-      if (!candidates.length) return currentPostIndex; // Caso extremo de ter apenas 1 post no total
 
-      return candidates[Math.floor(Math.random() * candidates.length)];
+      if (!candidates.length) return currentPostIndex;
+
+      return pickWeightedIndex(candidates);
     }
 
     async function loadComments(force = false) {
@@ -708,15 +757,14 @@
       if (index < 0 || index >= postsData.length) return;
 
       currentPostIndex = index;
-      rememberPostIndex(index); // Trava o post atual na nossa esteira anti-repetição de 10 posições
-      
+      rememberPostIndex(index);
+
       viewer.replaceChildren(createPostElement(postsData[index], index));
-      
+
       loadComments(false).then(() => renderComments(`post_${index}`));
       window.scrollTo(0, 0);
       advanceArmed = false;
 
-      // Sorteia e faz o preload do próximo post elegível (fora dos 10 bloqueados)
       nextPostIndex = pickNextPostIndex();
       if (nextPostIndex >= 0 && postsData[nextPostIndex].image) {
         const imgPreload = new Image();
@@ -872,7 +920,6 @@
           return;
         }
 
-        // Escolhe o primeiríssimo post respeitando a mesma regra
         showPost(pickNextPostIndex());
       } catch (err) {
         console.error(err);
