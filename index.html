@@ -154,10 +154,9 @@
       box-sizing: border-box;
     }
 
-    /* Container esqueleto para evitar que o layout quebre enquanto a imagem baixa */
+    /* CORREÇÃO DAS BARRAS ESTRANHAS: Removido min-height rígido, agora se adapta ao formato da foto */
     .image-container {
       width: 40%;
-      min-height: 160px;
       margin: 0 auto 15px auto;
       background: #1f1f30;
       border-radius: 6px;
@@ -177,7 +176,6 @@
       transition: opacity 0.3s ease-in-out;
     }
 
-    /* Classe ativada via JavaScript assim que a imagem termina de baixar */
     .post img.main-image.loaded {
       opacity: 1;
     }
@@ -325,7 +323,6 @@
 
       .image-container {
         width: 85%;
-        min-height: 220px;
       }
 
       .text {
@@ -374,14 +371,14 @@
 
     const COMMENT_NAME_KEY = "ula_comment_name";
     const COMMENTS_CACHE_TTL_MS = 15000;
-    const RECENT_POST_LIMIT = 10;
+    const RECENT_POST_LIMIT = 10; // Limite de 10 posts na esteira de bloqueio
 
     let commentsByPost = {};
     let commentsLoadedAt = 0;
     let postsData = [];
     let currentPostIndex = -1;
     let nextPostIndex = -1; 
-    let recentPostIndices = [];
+    let recentPostIndices = []; // Nossa esteira/fila FIFO de bloqueados
     let navigationLocked = false;
     let advanceArmed = false;
 
@@ -469,13 +466,16 @@
       return idx >= 0 ? idx : fallback;
     }
 
+    // Gerencia a fila de bloqueio FIFO (o primeiro a entrar sai após 10 novos posts)
     function rememberPostIndex(index) {
+      if (recentPostIndices.includes(index)) return; 
       recentPostIndices.push(index);
       if (recentPostIndices.length > RECENT_POST_LIMIT) {
-        recentPostIndices.shift();
+        recentPostIndices.shift(); // Remove o primeiro da lista, liberando sua chance aleatória novamente
       }
     }
 
+    // Sorteador blindado com a sua regra exata de bloqueio
     function pickNextPostIndex() {
       const total = postsData.length;
       if (!total) return -1;
@@ -484,16 +484,19 @@
       let candidates = [];
 
       for (let i = 0; i < total; i++) {
-        if (!blocked.has(i)) candidates.push(i);
+        if (!blocked.has(i) && i !== currentPostIndex) {
+          candidates.push(i);
+        }
       }
 
+      // Se a quantidade de posts no json for menor ou igual a 10, reduz temporariamente a restrição
       if (!candidates.length) {
-        candidates = Array.from({ length: total }, (_, i) => i);
+        candidates = Array.from({ length: total }, (_, i) => i).filter(i => i !== currentPostIndex);
       }
+      
+      if (!candidates.length) return currentPostIndex; // Caso extremo de ter apenas 1 post no total
 
-      const chosen = candidates[Math.floor(Math.random() * candidates.length)];
-      rememberPostIndex(chosen);
-      return chosen;
+      return candidates[Math.floor(Math.random() * candidates.length)];
     }
 
     async function loadComments(force = false) {
@@ -671,7 +674,6 @@
 
       html += `<div class="body-shell">`;
 
-      // Aplicação do wrapper esqueleto + evento onload para fade-in suave e decodificação assíncrona
       if (post.image && String(post.image).trim() !== "") {
         html += `
           <div class="image-container">
@@ -706,13 +708,15 @@
       if (index < 0 || index >= postsData.length) return;
 
       currentPostIndex = index;
+      rememberPostIndex(index); // Trava o post atual na nossa esteira anti-repetição de 10 posições
+      
       viewer.replaceChildren(createPostElement(postsData[index], index));
       
       loadComments(false).then(() => renderComments(`post_${index}`));
       window.scrollTo(0, 0);
       advanceArmed = false;
 
-      // O motor de Preload continua ativo puxando a próxima imagem da lista externa em background
+      // Sorteia e faz o preload do próximo post elegível (fora dos 10 bloqueados)
       nextPostIndex = pickNextPostIndex();
       if (nextPostIndex >= 0 && postsData[nextPostIndex].image) {
         const imgPreload = new Image();
@@ -868,6 +872,7 @@
           return;
         }
 
+        // Escolhe o primeiríssimo post respeitando a mesma regra
         showPost(pickNextPostIndex());
       } catch (err) {
         console.error(err);
