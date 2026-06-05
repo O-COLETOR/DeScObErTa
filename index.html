@@ -395,15 +395,18 @@
 
     const COMMENT_NAME_KEY = "ula_comment_name";
     const COMMENTS_CACHE_TTL_MS = 15000;
+
     const RECENT_POST_LIMIT = 10;
+    const RECENT_BLOCK_COUNT = 2;
+    const RECENT_WEIGHT_PENALTY = 0.2;
 
     const LEVEL_WEIGHTS = {
-      1: 20,
-      2: 15,
-      3: 10,
-      4: 4,
-      5: 2,
-      6: 0.5
+      1: 80,
+      2: 75,
+      3: 70,
+      4: 60,
+      5: 40,
+      6: 1
     };
 
     let commentsByPost = {};
@@ -520,7 +523,19 @@
       if (level && LEVEL_WEIGHTS[level] != null) {
         return LEVEL_WEIGHTS[level];
       }
-      return 1;
+      return 100;
+    }
+
+    function getRecentFactor(index) {
+      const recentPos = recentPostIndices.lastIndexOf(index);
+      if (recentPos === -1) return 1;
+
+      const cutoff = Math.max(0, recentPostIndices.length - RECENT_BLOCK_COUNT);
+      if (recentPos >= cutoff) {
+        return 0;
+      }
+
+      return RECENT_WEIGHT_PENALTY;
     }
 
     function pickWeightedIndex(indices) {
@@ -530,30 +545,34 @@
       const weights = [];
 
       for (const index of indices) {
-        const weight = Math.max(0, getPostWeight(postsData[index]));
-        totalWeight += weight;
-        weights.push([index, weight]);
+        const baseWeight = Math.max(0, getPostWeight(postsData[index]));
+        const finalWeight = baseWeight * getRecentFactor(index);
+        totalWeight += finalWeight;
+        weights.push([index, finalWeight]);
       }
 
-      if (totalWeight <= 0) {
+      const viable = weights.filter(([, weight]) => weight > 0);
+
+      if (!viable.length) {
         return indices[Math.floor(Math.random() * indices.length)];
       }
 
       let roll = Math.random() * totalWeight;
 
       for (const [index, weight] of weights) {
+        if (weight <= 0) continue;
         roll -= weight;
         if (roll < 0) return index;
       }
 
-      return weights[weights.length - 1][0];
+      return viable[viable.length - 1][0];
     }
 
     function pickNextPostIndex() {
       const total = postsData.length;
       if (!total) return -1;
 
-      const blocked = new Set(recentPostIndices);
+      const blocked = new Set(recentPostIndices.slice(-RECENT_BLOCK_COUNT));
       let candidates = [];
 
       for (let i = 0; i < total; i++) {
