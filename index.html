@@ -9,7 +9,7 @@
     html, body {
       margin: 0;
       min-height: 100%;
-      background-color: #0b0b0f;
+      background-color: #1a1a24;
       background-image:
         repeating-linear-gradient(
           0deg,
@@ -190,7 +190,7 @@
       position: relative;
     }
 
-    .post img.main-image {
+    .post .main-media {
       width: 100%;
       height: auto;
       display: block;
@@ -199,7 +199,7 @@
       transition: opacity 0.3s ease-in-out;
     }
 
-    .post img.main-image.loaded {
+    .post .main-media.loaded {
       opacity: 1;
     }
 
@@ -395,7 +395,6 @@
     const COMMENT_NAME_KEY = "ula_comment_name";
     const COMMENTS_CACHE_TTL_MS = 15000;
 
-    // Aumentado para 30 para conseguir rastrear com folga o bloqueio de 20 posts do Nível 6
     const RECENT_POST_LIMIT = 30; 
     const RECENT_BLOCK_COUNT = 2;
 
@@ -502,7 +501,6 @@
 
     function rememberPostIndex(index) {
       if (recentPostIndices.includes(index)) {
-        // Remove a ocorrência antiga para reordenar o histórico e mantê-lo recente no topo
         const idx = recentPostIndices.indexOf(index);
         recentPostIndices.splice(idx, 1);
       }
@@ -554,12 +552,10 @@
       const total = postsData.length;
       if (!total) return -1;
 
-      // --- LOGICA ISOLADA DO NÍVEL 6 ---
       const level6Candidates = [];
       for (let i = 0; i < total; i++) {
         if (getPostLevel(postsData[i]) === 6) {
           const lastSeenIdx = recentPostIndices.lastIndexOf(i);
-          // Calcula quantos posts se passaram desde que este post nível 6 específico apareceu
           const postsPassed = lastSeenIdx === -1 ? Infinity : (recentPostIndices.length - 1 - lastSeenIdx);
           
           if (postsPassed >= 20 && i !== currentPostIndex) {
@@ -568,23 +564,19 @@
         }
       }
 
-      // Se houver anomalias nível 6 elegíveis, joga o dado de 0,4% de chance pura
       if (level6Candidates.length > 0 && Math.random() < 0.004) {
         return level6Candidates[Math.floor(Math.random() * level6Candidates.length)];
       }
 
-      // --- LOGICA PADRÃO (NÍVEIS 1 A 5 E OUTROS) ---
       const blocked = new Set(recentPostIndices.slice(-RECENT_BLOCK_COUNT));
       let candidates = [];
 
       for (let i = 0; i < total; i++) {
-        // Exclui nível 6 do fluxo normal de pesos, respeita o bloqueio dos últimos 2 e evita o atual
         if (getPostLevel(postsData[i]) !== 6 && !blocked.has(i) && i !== currentPostIndex) {
           candidates.push(i);
         }
       }
 
-      // Fallback de emergência caso a lista de posts seja muito curta e tudo seja bloqueado
       if (!candidates.length) {
         for (let i = 0; i < total; i++) {
           if (getPostLevel(postsData[i]) !== 6 && i !== currentPostIndex) {
@@ -593,7 +585,6 @@
         }
       }
 
-      // Fallback final absoluto
       if (!candidates.length) return currentPostIndex;
 
       return pickWeightedIndex(candidates);
@@ -774,10 +765,16 @@
 
       html += `<div class="body-shell">`;
 
-      if (post.image && String(post.image).trim() !== "") {
+      if (post.video && String(post.video).trim() !== "") {
         html += `
           <div class="image-container">
-            <img class="main-image" src="${escapeHtml(post.image)}" decoding="async" alt="" onload="this.classList.add('loaded')">
+            <video class="main-media loaded" src="${escapeHtml(post.video)}" autoplay loop muted playsinline></video>
+          </div>
+        `;
+      } else if (post.image && String(post.image).trim() !== "") {
+        html += `
+          <div class="image-container">
+            <img class="main-media" src="${escapeHtml(post.image)}" decoding="async" alt="" onload="this.classList.add('loaded')">
           </div>
         `;
       }
@@ -817,7 +814,7 @@
       advanceArmed = false;
 
       nextPostIndex = pickNextPostIndex();
-      if (nextPostIndex >= 0 && postsData[nextPostIndex].image) {
+      if (nextPostIndex >= 0 && postsData[nextPostIndex].image && (!postsData[nextPostIndex].video || String(postsData[nextPostIndex].video).trim() === "")) {
         const imgPreload = new Image();
         imgPreload.src = postsData[nextPostIndex].image;
       }
@@ -877,7 +874,7 @@
 
         if (advanceArmed) {
           advanceArmed = false;
-          advanceToNextPost();
+          value = advanceToNextPost();
         } else {
           advanceArmed = true;
         }
@@ -971,7 +968,6 @@
           return;
         }
 
-        // Inicializa com o primeiro post sorteado usando a nova lógica
         showPost(pickNextPostIndex());
       } catch (err) {
         console.error(err);
