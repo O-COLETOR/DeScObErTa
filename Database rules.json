@@ -1,0 +1,24 @@
+{
+  "rules": {
+    "usernames": {
+      "$nomeKey": {
+        ".read": true,
+        ".write": "!data.exists() && auth != null && newData.val() === auth.uid"
+      }
+    },
+    "users": {
+      "$uid": {
+        ".read": true,
+        ".write": "auth != null && auth.uid === $uid && !data.exists()"
+      }
+    },
+    "comments": {
+      "$postId": {
+        ".read": true,
+        "$commentId": {
+          ".write": "auth != null && newData.child('nome').val() === root.child('users/' + auth.uid + '/nome').val()"
+        }
+      }
+    }
+  }
+}
