@@ -12,12 +12,26 @@
         ".write": "auth != null && auth.uid === $uid && !data.exists()"
       }
     },
+    "userMeta": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        "lastCommentTs": {
+          ".write": "auth != null && auth.uid === $uid"
+        }
+      }
+    },
     "comments": {
       "$postId": {
         ".read": true,
         "$commentId": {
-          ".write": "auth != null && newData.child('nome').val() === root.child('users/' + auth.uid + '/nome').val()"
+          ".write": "(auth != null && newData.child('nome').val() === root.child('users/' + auth.uid + '/nome').val() && (!root.child('userMeta/' + auth.uid + '/lastCommentTs').exists() || newData.child('ts').val() - root.child('userMeta/' + auth.uid + '/lastCommentTs').val() > 15000)) || (auth != null && auth.uid === 'iVUD07u9vyNaFqQgGf34P3JCh8u2')"
         }
+      }
+    },
+    "reports": {
+      ".read": "auth != null && auth.uid === 'iVUD07u9vyNaFqQgGf34P3JCh8u2'",
+      "$reportId": {
+        ".write": "auth != null && (auth.uid === 'iVUD07u9vyNaFqQgGf34P3JCh8u2' || newData.exists())"
       }
     }
   }
