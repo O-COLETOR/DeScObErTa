@@ -320,6 +320,83 @@ h1 {
   text-align: center;
   line-height: 1.6;
 }
+/* --- denúncia + painel admin --- */
+.comment-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 6px; }
+.comment-row > span { flex: 1 1 auto; }
+.report-btn {
+  flex: 0 0 auto;
+  border: none;
+  background: #c62828;
+  color: #fff;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  font-size: 11px;
+  line-height: 18px;
+  text-align: center;
+  cursor: pointer;
+  padding: 0;
+  font-weight: bold;
+}
+.report-btn:hover { filter: brightness(1.15); }
+#admin-view { display: none; }
+body.admin-mode #viewer, body.admin-mode .hint { display: none !important; }
+body.admin-mode #admin-view {
+  display: block;
+  min-height: 100vh;
+  box-sizing: border-box;
+  padding: 40px 16px;
+  font-family: Arial, sans-serif;
+}
+.admin-login {
+  width: min(340px, 100%);
+  margin: 0 auto;
+  background: #161622;
+  border: 1px solid #b6abb6;
+  padding: 18px;
+  box-sizing: border-box;
+}
+.admin-login h2 { font-size: 16px; text-align: center; margin: 0 0 12px 0; }
+.admin-login label { display: block; font-size: 12px; opacity: 0.85; margin: 10px 0 4px 0; }
+.admin-login input {
+  width: 100%;
+  background: #111;
+  border: 1px solid #333;
+  color: #fff;
+  padding: 8px;
+  border-radius: 5px;
+  box-sizing: border-box;
+  font-family: Arial, sans-serif;
+}
+.admin-login button {
+  width: 100%;
+  margin-top: 14px;
+  padding: 10px;
+  background: #2a2a3f;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  border-radius: 5px;
+}
+.admin-login .error-msg { color: #ff8080; font-size: 12px; margin-top: 10px; min-height: 14px; }
+.admin-list { width: min(700px, 100%); margin: 0 auto; }
+.admin-list h2 { text-align: center; }
+.report-card { background: #161622; border: 1px solid #444; padding: 12px; margin-bottom: 12px; }
+.report-card .meta { font-size: 11px; opacity: 0.6; margin-bottom: 6px; }
+.report-card .txt { font-size: 14px; margin-bottom: 10px; word-break: break-word; }
+.report-card .actions { display: flex; gap: 8px; }
+.report-card button {
+  flex: 1;
+  padding: 8px;
+  border: none;
+  cursor: pointer;
+  border-radius: 5px;
+  color: #fff;
+}
+.report-card .btn-del { background: #7a1f1f; }
+.report-card .btn-dismiss { background: #2a2a3f; }
+.report-empty { text-align: center; opacity: 0.7; margin-top: 40px; }
+
 @media (max-width: 600px) {
   h1 { padding: 16px 12px 10px 12px; font-size: 20px; }
   #viewer { height: calc(100vh - 58px); height: calc(100svh - 58px); padding: 16px 12px 12px 12px; }
@@ -345,11 +422,18 @@ h1 {
   <div class="account-modal" id="account-modal"></div>
 </div>
 
+<div id="admin-view"></div>
+
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
 <script>
 "use strict";
+
+const isAdminRoute = new URLSearchParams(location.search).has("painel");
+if (isAdminRoute) document.body.classList.add("admin-mode");
+const ADMIN_UID = "iVUD07u9vyNaFqQgGf34P3JCh8u2";
+const COOLDOWN_MS = 15000;
 
 /* ================== FIREBASE ================== */
 const firebaseConfig = {
@@ -515,6 +599,16 @@ function traduzErro(err) {
 }
 
 auth.onAuthStateChanged(async (user) => {
+  if (isAdminRoute) {
+    if (user && user.uid === ADMIN_UID) {
+      currentUid = user.uid;
+      showAdminPanel();
+    } else {
+      currentUid = null;
+      renderAdminLogin(user ? "Essa conta não é admin." : "");
+    }
+    return;
+  }
   if (user) {
     currentUid = user.uid;
     try {
@@ -528,6 +622,89 @@ auth.onAuthStateChanged(async (user) => {
     currentUid = null;
     currentNome = null;
     openAccountModal("cadastro");
+  }
+});
+
+/* ================== PAINEL ADMIN (rota ?painel) ================== */
+function renderAdminLogin(message) {
+  const container = document.getElementById("admin-view");
+  container.innerHTML = `
+    <div class="admin-login">
+      <h2>Painel</h2>
+      <label>Sua pessoa (email)</label>
+      <input type="email" id="admin-email">
+      <label>Sua chave (senha)</label>
+      <input type="password" id="admin-senha">
+      <button id="admin-entrar">Entrar</button>
+      <div class="error-msg" id="admin-error">${escapeHtml(message || "")}</div>
+    </div>
+  `;
+  document.getElementById("admin-entrar").onclick = async () => {
+    const email = document.getElementById("admin-email").value.trim();
+    const senha = document.getElementById("admin-senha").value;
+    try {
+      await auth.signInWithEmailAndPassword(email, senha);
+    } catch (err) {
+      console.error(err);
+      document.getElementById("admin-error").textContent = "Email ou senha errados.";
+    }
+  };
+}
+
+async function showAdminPanel() {
+  const container = document.getElementById("admin-view");
+  container.innerHTML = `<div class="admin-list"><h2>Denúncias</h2><div id="admin-reports">Carregando...</div></div>`;
+  const listEl = document.getElementById("admin-reports");
+  try {
+    const snap = await db.ref("reports").get();
+    if (!snap.exists()) {
+      listEl.innerHTML = `<div class="report-empty">Nenhuma denúncia no momento.</div>`;
+      return;
+    }
+    const rows = [];
+    snap.forEach((child) => {
+      const v = child.val();
+      rows.push({
+        key: child.key,
+        postId: v.postId || "",
+        commentId: v.commentId || "",
+        nome: v.nome || "?",
+        texto: v.texto || ""
+      });
+    });
+    listEl.innerHTML = rows.map(r => `
+      <div class="report-card">
+        <div class="meta">${escapeHtml(r.nome)} · ${escapeHtml(r.postId)}</div>
+        <div class="txt">${escapeHtml(r.texto)}</div>
+        <div class="actions">
+          <button class="btn-del" data-action="admin-delete" data-post-id="${escapeHtml(r.postId)}" data-comment-id="${escapeHtml(r.commentId)}" data-report-key="${escapeHtml(r.key)}">Apagar comentário</button>
+          <button class="btn-dismiss" data-action="admin-dismiss" data-report-key="${escapeHtml(r.key)}">Ignorar denúncia</button>
+        </div>
+      </div>
+    `).join("");
+  } catch (err) {
+    console.error(err);
+    listEl.innerHTML = `<div class="report-empty">Erro ao carregar denúncias.</div>`;
+  }
+}
+
+document.getElementById("admin-view").addEventListener("click", async (event) => {
+  const btn = event.target.closest("[data-action]");
+  if (!btn) return;
+  const action = btn.dataset.action;
+  const reportKey = btn.dataset.reportKey;
+  try {
+    if (action === "admin-delete") {
+      await db.ref(`comments/${btn.dataset.postId}/${btn.dataset.commentId}`).remove();
+      await db.ref(`reports/${reportKey}`).remove();
+      showAdminPanel();
+    } else if (action === "admin-dismiss") {
+      await db.ref(`reports/${reportKey}`).remove();
+      showAdminPanel();
+    }
+  } catch (err) {
+    console.error(err);
+    alert("Não deu pra completar essa ação.");
   }
 });
 
@@ -642,11 +819,16 @@ async function loadAndRenderComments(postId) {
     const items = [];
     snap.forEach((child) => {
       const v = child.val();
-      items.push({ nome: v.nome || "?", texto: v.texto || "", ts: v.ts || 0 });
+      items.push({ key: child.key, nome: v.nome || "?", texto: v.texto || "", ts: v.ts || 0 });
     });
     items.sort((a, b) => a.ts - b.ts);
     box.innerHTML = items.map(c => `
-      <div class="comment"><b>${escapeHtml(c.nome)}</b>: ${escapeHtml(c.texto)}</div>
+      <div class="comment">
+        <div class="comment-row">
+          <span><b>${escapeHtml(c.nome)}</b>: ${escapeHtml(c.texto)}</span>
+          <button class="report-btn" type="button" title="Denunciar" data-action="report-comment" data-post-id="${postId}" data-comment-id="${c.key}">!</button>
+        </div>
+      </div>
     `).join("");
   } catch (err) {
     console.error("Erro ao carregar comentários:", err);
@@ -664,12 +846,54 @@ function toggleComments(postId) {
   if (willOpen) loadAndRenderComments(postId);
 }
 
+async function reportComment(postId, commentId) {
+  if (!currentUid) {
+    openAccountModal("login");
+    return;
+  }
+  try {
+    const snap = await db.ref(`comments/${postId}/${commentId}`).get();
+    if (!snap.exists()) return;
+    const v = snap.val();
+    await db.ref(`reports/${postId}__${commentId}`).set({
+      postId,
+      commentId,
+      nome: v.nome || "?",
+      texto: v.texto || "",
+      ts: firebase.database.ServerValue.TIMESTAMP
+    });
+    alert("Denunciado.");
+  } catch (err) {
+    console.error(err);
+    alert("Não deu pra denunciar agora.");
+  }
+}
+
+function startCooldown(btn) {
+  if (!btn) return;
+  let secondsLeft = Math.ceil(COOLDOWN_MS / 1000);
+  btn.disabled = true;
+  btn.textContent = `Aguarda ${secondsLeft}s`;
+  const timer = setInterval(() => {
+    secondsLeft--;
+    if (secondsLeft <= 0) {
+      clearInterval(timer);
+      btn.disabled = false;
+      btn.textContent = "Enviar";
+    } else {
+      btn.textContent = `Aguarda ${secondsLeft}s`;
+    }
+  }, 1000);
+}
+
 async function sendComment(postId) {
   if (!currentUid || !currentNome) {
     openAccountModal("login");
     return;
   }
   const textField = document.getElementById(`text-${postId}`);
+  const sendBtn = document.querySelector(`[data-action="send-comment"][data-post-id="${postId}"]`);
+  if (sendBtn && sendBtn.disabled) return;
   if (!textField) return;
   const texto = String(textField.value || "").trim();
   if (!texto) {
@@ -682,11 +906,13 @@ async function sendComment(postId) {
       texto: texto,
       ts: firebase.database.ServerValue.TIMESTAMP
     });
+    await db.ref("userMeta/" + currentUid).update({ lastCommentTs: firebase.database.ServerValue.TIMESTAMP });
     textField.value = "";
     loadAndRenderComments(postId);
+    startCooldown(sendBtn);
   } catch (err) {
     console.error(err);
-    alert("Não deu pra enviar o comentário.");
+    alert("Não deu pra enviar o comentário. Se enviou um agora, espera um pouco e tenta de novo.");
   }
 }
 
@@ -851,6 +1077,7 @@ viewer.addEventListener("click", (event) => {
   if (!postId) return;
   if (action === "toggle-comments") toggleComments(postId);
   else if (action === "send-comment") sendComment(postId);
+  else if (action === "report-comment") reportComment(postId, actionEl.dataset.commentId);
 });
 
 async function init() {
@@ -870,7 +1097,7 @@ async function init() {
   }
 }
 
-init();
+if (!isAdminRoute) init();
 </script>
 </body>
 </html>
